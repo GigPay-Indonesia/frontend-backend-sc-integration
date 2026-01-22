@@ -1,0 +1,305 @@
+import React, { useState } from 'react';
+import { Wallet, Lock, TrendingUp, Activity, ExternalLink, ArrowRight, ShieldCheck, CheckCircle, Zap, CreditCard, Copy } from 'lucide-react';
+
+// --- Types ---
+export interface DashboardData {
+    walletBalance: string;
+    inEscrow: string;
+    yieldEarned: string;
+    activeGigsCount: number;
+}
+
+// --- Stats Grid Component ---
+export const StatsGrid: React.FC<DashboardData> = ({ walletBalance, inEscrow, yieldEarned, activeGigsCount }) => {
+    const [showBalance, setShowBalance] = useState(true);
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Balance Card */}
+            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-5 relative overflow-hidden group hover:border-slate-600 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -top-10 -right-10 w-24 h-24 bg-slate-500/10 rounded-full blur-2xl group-hover:bg-slate-500/20 transition-all"></div>
+
+                <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300 shadow-inner">
+                            <Wallet size={18} />
+                        </div>
+                        <button
+                            onClick={() => setShowBalance(!showBalance)}
+                            className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-white transition-colors border border-slate-800 px-2 py-1 rounded-lg bg-slate-900/50"
+                        >
+                            {showBalance ? 'Hide' : 'Show'}
+                        </button>
+                    </div>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Total Balance</p>
+                    <h3 className="text-2xl font-black text-white tracking-tight font-mono">
+                        {showBalance ? `${walletBalance}` : '••••••••'} <span className="text-xs text-slate-600 font-sans font-bold">IDRX</span>
+                    </h3>
+                </div>
+            </div>
+
+            {/* Escrow Card */}
+            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-5 relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -top-10 -right-10 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all"></div>
+
+                <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-2xl bg-cyan-950/30 border border-cyan-900/50 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.1)]">
+                            <Lock size={18} />
+                        </div>
+                    </div>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">In Escrow</p>
+                    <h3 className="text-2xl font-black text-white tracking-tight font-mono">
+                        {inEscrow} <span className="text-xs text-slate-600 font-sans font-bold">IDRX</span>
+                    </h3>
+                </div>
+            </div>
+
+            {/* Yield Card */}
+            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-5 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+
+                <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-950/30 border border-emerald-900/50 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.1)]">
+                            <TrendingUp size={18} />
+                        </div>
+                        <span className="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-emerald-500/20">
+                            +4.2% APY
+                        </span>
+                    </div>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Yield Earned</p>
+                    <h3 className="text-2xl font-black text-white tracking-tight font-mono flex items-center gap-2">
+                        +{yieldEarned} <span className="text-xs text-slate-600 font-sans font-bold">IDRX</span>
+                    </h3>
+                </div>
+            </div>
+
+            {/* Active Gigs Card */}
+            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-5 relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -top-10 -right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all"></div>
+
+                <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-2xl bg-purple-950/30 border border-purple-900/50 flex items-center justify-center text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                            <Activity size={18} />
+                        </div>
+                    </div>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Active Gigs</p>
+                    <h3 className="text-2xl font-black text-white tracking-tight font-mono">{activeGigsCount}</h3>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Active Gigs List Component ---
+export const ActiveGigsList: React.FC = () => {
+    // Mock Data
+    const activeGigs = [
+        { id: 1, title: 'Smart Contract Audit for DeFi Protocol', role: 'CLIENT', progress: 3, totalMilestones: 4, status: 'Review' },
+        { id: 2, title: 'Frontend React Dashboard Implementation', role: 'FREELANCER', progress: 1, totalMilestones: 3, status: 'In Progress' },
+    ];
+
+    if (activeGigs.length === 0) {
+        return (
+            <div className="bg-[#0a0a0a] border border-slate-800 rounded-3xl p-1 relative overflow-hidden group h-full min-h-[400px]">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-black"></div>
+
+                <div className="relative z-10 h-full flex flex-col items-center justify-center text-center p-8">
+                    <div className="w-20 h-20 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                        <Zap size={32} className="text-slate-600" />
+                    </div>
+                    <h3 className="text-white font-black text-xl mb-2 tracking-tight">No Active Gigs</h3>
+                    <p className="text-slate-500 text-sm max-w-xs mb-8 leading-relaxed">Your workspace is Currently empty. Launch a new project or explore the market to get started.</p>
+                    <button className="group relative px-6 py-3 bg-white text-black font-bold rounded-xl overflow-hidden hover:scale-105 transition-transform">
+                        <span className="relative z-10">Create New Gig</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity mix-blend-color-burn"></div>
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-6 h-full relative overflow-hidden">
+            {/* Background Effects */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+            <div className="flex justify-between items-center mb-6 relative z-10">
+                <h4 className="text-white font-black flex items-center gap-3 text-lg">
+                    <div className="w-2 h-6 bg-gradient-to-b from-cyan-400 to-blue-600 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.5)]"></div>
+                    Active Work
+                </h4>
+                <button className="text-xs font-bold text-slate-500 hover:text-white uppercase tracking-wider transition-colors border border-transparent hover:border-slate-800 px-3 py-1 rounded-lg">View All</button>
+            </div>
+
+            <div className="space-y-4 relative z-10">
+                {activeGigs.map((gig) => (
+                    <div key={gig.id} className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 hover:border-cyan-500/30 hover:bg-slate-900/60 transition-all group cursor-pointer relative overflow-hidden backdrop-blur-sm">
+
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h5 className="text-white font-bold text-base mb-2 group-hover:text-cyan-400 transition-colors">{gig.title}</h5>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-[10px] uppercase font-black px-2 py-1 rounded-md border ${gig.role === 'CLIENT'
+                                        ? 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]'
+                                        : 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]'
+                                        }`}>
+                                        {gig.role}
+                                    </span>
+                                    <span className="text-slate-600 text-xs">•</span>
+                                    <span className="text-slate-400 text-xs font-medium">ID: #8293{gig.id}</span>
+                                </div>
+                            </div>
+                            <div className={`px-3 py-1 rounded-full border flex items-center gap-2 ${gig.status === 'Review'
+                                ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+                                : 'bg-slate-800 border-slate-700 text-slate-300'
+                                }`}>
+                                {gig.status === 'Review' && <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse shadow-[0_0_5px_rgba(250,204,21,0.5)]"></span>}
+                                <span className="text-[10px] font-bold uppercase tracking-wider">{gig.status}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                <span>Progress</span>
+                                <span>{Math.round((gig.progress / gig.totalMilestones) * 100)}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-800/50">
+                                <div
+                                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.3)] relative"
+                                    style={{ width: `${(gig.progress / gig.totalMilestones) * 100}%` }}
+                                >
+                                    <div className="absolute inset-0 bg-white/20"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// --- Profile & Actions Component ---
+interface ProfileActionsProps {
+    walletAddress?: string;
+}
+
+import FuturisticProfileCard from './FuturisticProfileCard';
+
+export const ProfileActions: React.FC<ProfileActionsProps> = ({ walletAddress }) => {
+    // Determine truncated address for display
+    const displayAddress = walletAddress ? `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}` : 'UNKNOWN';
+
+    return (
+        <div className="space-y-6 h-full flex flex-col">
+            {/* Identity Card - Futuristic Design */}
+            <FuturisticProfileCard
+                name="Zennz"
+                handle="zennz.base"
+                rank="Elite Freelancer"
+                walletAddress={walletAddress}
+                avatarUrl="/avatars/alex.png"
+            />
+
+            {/* Quick Actions */}
+            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-6 flex-1 flex flex-col justify-center min-h-[220px]">
+                <h4 className="text-slate-500 font-bold mb-4 text-xs uppercase tracking-widest">Quick Actions</h4>
+                <div className="space-y-3">
+                    <a href="/#/create-gig" className="flex items-center justify-between w-full p-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-2xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.15)] hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:scale-[1.02] group">
+                        <span className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                                <Zap size={16} className="text-white fill-current" />
+                            </div>
+                            Create New Gig
+                        </span>
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </a>
+
+                    <button className="flex items-center justify-between w-full p-4 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-bold rounded-2xl transition-all group hover:bg-slate-800">
+                        <span className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center group-hover:bg-slate-700 group-hover:border-slate-600">
+                                <CreditCard size={16} />
+                            </div>
+                            Withdraw to Bank
+                        </span>
+                        <ExternalLink size={16} className="text-slate-500 group-hover:text-white transition-colors" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Recent Activity Component ---
+export const RecentActivityTable: React.FC = () => {
+    const activities = [
+        { type: 'Deposit', amount: '+ 5.000.000 IDRX', date: '2 mins ago', status: 'Confirmed', icon: '↓' },
+        { type: 'Escrow Lock', amount: '- 15.000.000 IDRX', date: '5 hours ago', status: 'Locked', icon: '🔒' },
+        { type: 'Yield Payout', amount: '+ 25.000 IDRX', date: '1 day ago', status: 'Success', icon: '⚡' },
+    ];
+
+    return (
+        <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl overflow-hidden min-h-[300px]">
+            <div className="p-6 border-b border-slate-800/50 flex justify-between items-center bg-slate-900/20">
+                <h4 className="text-white font-black flex items-center gap-3 text-lg">
+                    <Activity size={20} className="text-slate-500" />
+                    Recent Activity
+                </h4>
+                <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+                    <ExternalLink size={16} className="text-slate-500" />
+                </button>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                    <thead className="text-slate-500 uppercase font-bold text-[10px] tracking-widest border-b border-slate-800/50">
+                        <tr>
+                            <th className="px-6 py-4 font-bold">Transaction</th>
+                            <th className="px-6 py-4 font-bold">Amount</th>
+                            <th className="px-6 py-4 font-bold">Time</th>
+                            <th className="px-6 py-4 text-right font-bold">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/30">
+                        {activities.map((item, i) => (
+                            <tr key={i} className="hover:bg-white/[0.02] transition-colors group cursor-default">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${item.type === 'Deposit' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                                            item.type === 'Escrow Lock' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                                                'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                            }`}>
+                                            {item.icon}
+                                        </div>
+                                        <span className="text-white font-bold group-hover:text-cyan-400 transition-colors">{item.type}</span>
+                                    </div>
+                                </td>
+                                <td className={`px-6 py-4 font-mono font-bold text-base ${item.amount.startsWith('+') ? 'text-emerald-400' : 'text-slate-300'
+                                    }`}>
+                                    {item.amount}
+                                </td>
+                                <td className="px-6 py-4 text-slate-500 font-medium text-xs font-mono">{item.date}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${item.status === 'Confirmed' || item.status === 'Success'
+                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                        : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                                        }`}>
+                                        {item.status}
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
