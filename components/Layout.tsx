@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Logo } from './Logo';
 import { Button } from './Button';
+import { WalletSelector } from './WalletSelector';
 import { UserRole } from '../types';
 import PillNav from './PillNav';
 import {
@@ -9,13 +10,6 @@ import {
   Wallet,
   WalletDropdown,
   WalletDropdownDisconnect,
-  WalletDropdownBasename,
-  WalletDropdownFundLink,
-  WalletDropdownLink,
-  WalletAdvancedAddressDetails,
-  WalletAdvancedTokenHoldings,
-  WalletAdvancedTransactionActions,
-  WalletAdvancedWalletActions,
 } from '@coinbase/onchainkit/wallet';
 import {
   Address,
@@ -23,6 +17,7 @@ import {
   Name,
   EthBalance,
 } from '@coinbase/onchainkit/identity';
+import { useAccount } from 'wagmi';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -61,8 +56,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, userRole, walletAddres
     { label: 'Dashboard', href: '/dashboard', onClick: () => navigate('/dashboard') },
     { label: 'Treasury', href: '/treasury', onClick: () => navigate('/treasury') },
     { label: 'Create Gig', href: '/create-gig', onClick: () => navigate('/create-gig') },
-    { label: 'Explore', href: '/jobs', onClick: () => navigate('/jobs') },
+    { label: 'Explore', href: '/explore', onClick: () => navigate('/explore') },
   ];
+
+  const { isConnected } = useAccount();
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-white selection:bg-indigo-500/30">
@@ -77,15 +74,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, userRole, walletAddres
           userRole ? (
             <div className="relative z-50">
               <Wallet>
-                <ConnectWallet className="bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full px-4 py-2 transition-all">
-                  <Avatar className="h-6 w-6" />
-                  <Name className="text-white font-medium ml-2" />
-                </ConnectWallet>
+                {isConnected ? (
+                  <ConnectWallet className="bg-transparent hover:bg-white/10 text-white rounded-full transition-all">
+                    <Avatar className="h-6 w-6" />
+                    <Name />
+                  </ConnectWallet>
+                ) : (
+                  <WalletSelector />
+                )}
                 <WalletDropdown>
-                  <WalletAdvancedWalletActions />
-                  <WalletAdvancedAddressDetails />
-                  <WalletAdvancedTransactionActions />
-                  <WalletAdvancedTokenHoldings />
                   <WalletDropdownDisconnect />
                 </WalletDropdown>
               </Wallet>
@@ -93,7 +90,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, userRole, walletAddres
           ) : (
             <Button
               onClick={() => navigate('/login')}
-              className="bg-white text-black hover:bg-blue-600 hover:text-white px-6 py-2 rounded-full font-medium transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)]"
+              variant="glow"
+              className="px-6 py-2 rounded-full font-medium"
             >
               Launch App
             </Button>

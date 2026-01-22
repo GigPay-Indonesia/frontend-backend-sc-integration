@@ -260,7 +260,7 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
             <h2 className="text-4xl md:text-6xl font-bold font-display mb-8 relative z-10">
               Ready to maximize your <br /> capital efficiency?
             </h2>
-            <Button size="lg" variant="primary" onClick={onConnect} className="relative z-10 px-12 py-4 text-lg rounded-full">
+            <Button size="lg" variant="glow" onClick={() => navigate('/login')} className="relative z-10 px-12 py-4 text-lg rounded-full">
               Launch App
             </Button>
           </div>

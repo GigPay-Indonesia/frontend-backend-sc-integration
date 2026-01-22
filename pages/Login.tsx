@@ -2,10 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Logo } from '../components/Logo';
 import { Button } from '../components/Button';
-import SpotlightCard from '../components/SpotlightCard';
-import { Mail, ArrowRight, Wallet as WalletIcon, AtSign, Lock } from 'lucide-react';
-import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
-import { useAccount } from 'wagmi';
+import PixelBlast from '../components/PixelBlast';
+import BlurText from '../components/BlurText';
+import DecryptedText from '../components/DecryptedText';
+import { Mail, ArrowRight, Lock, AtSign } from 'lucide-react';
+import { WalletSelector } from '../components/WalletSelector';
+import {
+    Wallet,
+    ConnectWallet,
+    WalletDropdown,
+    WalletAdvancedAddressDetails,
+    WalletAdvancedTokenHoldings,
+    WalletAdvancedTransactionActions,
+    WalletAdvancedWalletActions,
+    WalletDropdownDisconnect
+} from '@coinbase/onchainkit/wallet';
+import { Avatar, Name } from '@coinbase/onchainkit/identity';
+import { useAccount, useConnect } from 'wagmi';
 
 interface LoginProps {
     onConnectWallet: () => void;
@@ -14,19 +27,14 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ onConnectWallet }) => {
     const navigate = useNavigate();
     const { isConnected, address } = useAccount();
+    const { connectors, connect } = useConnect();
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    // Redirect or handle login if wallet connects
     useEffect(() => {
         if (isConnected && address) {
-            // NOTE: In a real app we'd check if user has a registered role
-            // For now, we connect wallet but don't auto-redirect to dashboard 
-            // because we need the 'userRole' state in App.tsx to be set.
-            // The user only asked to "make the connect button function using OnchainKit".
-            // We'll keep the button and let it handle the connection state.
             console.log("Wallet connected:", address);
         }
     }, [isConnected, address]);
@@ -34,7 +42,6 @@ export const Login: React.FC<LoginProps> = ({ onConnectWallet }) => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate loading
         setTimeout(() => {
             setIsLoading(false);
             navigate('/dashboard');
@@ -42,124 +49,157 @@ export const Login: React.FC<LoginProps> = ({ onConnectWallet }) => {
     };
 
     return (
-        <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Background Ambience */}
-            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
-            <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
+        <div className="min-h-screen bg-[#050505] relative overflow-hidden flex items-center justify-center p-4">
 
-            {/* Main Card */}
-            <SpotlightCard className="w-full max-w-md p-8 pointer-events-auto" spotlightColor="rgba(59, 130, 246, 0.2)">
-                <div className="text-center mb-8 relative z-10">
-                    <div className="flex justify-center mb-4 cursor-pointer" onClick={() => navigate('/')}>
-                        <Logo className="h-12 w-auto animate-fade-in" />
+            {/* Unified Background Effect */}
+            <div className="fixed inset-0 z-0">
+                <PixelBlast />
+                {/* Overlay to ensure text readability */}
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+            </div>
+
+            <div className="relative z-10 w-full max-w-5xl grid lg:grid-cols-2 gap-12 items-center">
+
+                {/* Left Side: Text/Branding (Float over background) */}
+                <div className="hidden lg:block space-y-8 text-center lg:text-left">
+                    <div className="inline-flex justify-start">
+                        <Logo className="h-20 w-auto" />
                     </div>
-                    <h2 className="text-3xl font-bold font-display text-white mb-2">
-                        {isLogin ? 'Welcome Back' : 'Create Account'}
-                    </h2>
-                    <p className="text-slate-400 text-sm">
-                        {isLogin ? 'Sign in to access your dashboard' : 'Join the decentralized workforce'}
-                    </p>
-                </div>
 
-                {/* Tab Switcher */}
-                <div className="flex p-1 bg-white/5 rounded-xl mb-8 relative z-10 border border-white/5">
-                    <button
-                        onClick={() => setIsLogin(true)}
-                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${isLogin ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-400 hover:text-white'
-                            }`}
-                    >
-                        Sign In
-                    </button>
-                    <button
-                        onClick={() => setIsLogin(false)}
-                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${!isLogin ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-400 hover:text-white'
-                            }`}
-                    >
-                        Sign Up
-                    </button>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
                     <div className="space-y-4">
-                        <div className="relative group">
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Email address"
-                                className="w-full bg-black hover:bg-black border border-white/10 rounded-xl px-4 py-3 pl-11 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all group-hover:border-white/20 [&:-webkit-autofill]:shadow-[0_0_0_1000px_#000000_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:white]"
-                                style={{ backgroundColor: '#000000' }}
-                                required
+                        <BlurText
+                            text="Future of Work"
+                            className="text-6xl font-bold font-display text-white tracking-tight leading-tight"
+                            delay={150}
+                            animateBy="words"
+                            direction="top"
+                        />
+                        <div className="text-2xl text-slate-300 font-light h-16">
+                            <DecryptedText
+                                text="Decentralized. Secure. Limitless."
+                                speed={80}
+                                maxIterations={15}
+                                useOriginalCharsOnly={true}
+                                className="font-mono text-blue-400"
+                                parentClassName="inline-block"
+                                encryptedClassName="text-slate-600"
                             />
-                            <div className="absolute left-3 top-3.5 text-slate-500 group-focus-within:text-blue-400 transition-colors group-focus-within:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
-                                <AtSign className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="relative group">
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Password"
-                                className="w-full bg-black hover:bg-black border border-white/10 rounded-xl px-4 py-3 pl-11 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all group-hover:border-white/20 [&:-webkit-autofill]:shadow-[0_0_0_1000px_#000000_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:white]"
-                                style={{ backgroundColor: '#000000' }}
-                                required
-                            />
-                            <div className="absolute left-3 top-3.5 text-slate-500 group-focus-within:text-blue-400 transition-colors group-focus-within:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
-                                <Lock className="w-5 h-5" />
-                            </div>
                         </div>
                     </div>
-
-                    <Button
-                        variant="glow"
-                        className="w-full py-3 text-base flex justify-center items-center gap-2 group"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <span className="animate-pulse">Processing...</span>
-                        ) : (
-                            <>
-                                {isLogin ? 'Sign In' : 'Create Account'}
-                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </>
-                        )}
-                    </Button>
-                </form>
-
-                <div className="my-6 flex items-center gap-4 relative z-10">
-                    <div className="h-px bg-white/10 flex-1" />
-                    <span className="text-xs text-slate-500 uppercase tracking-widest">Or continue with</span>
-                    <div className="h-px bg-white/10 flex-1" />
                 </div>
 
-                <div className="space-y-3 relative z-10">
-                    {/* Google Button */}
-                    <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-3 transition-colors shadow-[0_0_20px_-5px_rgba(37,99,235,0.5)] hover:shadow-[0_0_25px_-5px_rgba(37,99,235,0.7)] border border-blue-400/20">
-                        <svg className="w-5 h-5 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
-                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                        </svg>
-                        <span>Google</span>
-                    </button>
+                {/* Right Side: Login Form (Transparent) */}
+                <div className="w-full max-w-md mx-auto">
+                    <div className="bg-transparent p-0 relative">
 
-                    {/* OnchainKit Connect Wallet Button */}
-                    <Wallet className="w-full">
-                        <ConnectWallet
-                            className="w-full bg-[#111] hover:bg-blue-600/10 border border-white/10 hover:border-blue-500/50 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-3 transition-all"
+                        {/* Mobile Logo */}
+                        <div className="lg:hidden flex justify-center mb-8">
+                            <Logo className="h-12 w-auto" />
+                        </div>
+
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-white mb-2 font-display">
+                                {isLogin ? 'Welcome back' : 'Create an account'}
+                            </h2>
+                            <p className="text-slate-400">
+                                {isLogin
+                                    ? 'Enter your details to access your workspace.'
+                                    : 'Join thousands of freelancers building on-chain.'}
+                            </p>
+                        </div>
+
+                        {/* OnchainKit Connect Wallet */}
+                        <div className="space-y-3 mb-8">
+                            <Wallet className="w-full">
+                                <WalletSelector />
+                                <WalletDropdown>
+                                    <WalletAdvancedWalletActions />
+                                    <WalletAdvancedAddressDetails />
+                                    <WalletAdvancedTransactionActions />
+                                    <WalletAdvancedTokenHoldings />
+                                    <WalletDropdownDisconnect />
+                                </WalletDropdown>
+                            </Wallet>
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                const coinbaseConnector = connectors.find(c => c.id === 'coinbaseWalletSDK');
+                                if (coinbaseConnector) connect({ connector: coinbaseConnector });
+                            }}
+                            className="w-full bg-white hover:bg-slate-100 text-black rounded-xl py-3 font-bold text-md transition-all flex items-center justify-center gap-3 mb-8"
                         >
-                            <span className="text-white">Connect Wallet</span>
-                        </ConnectWallet>
-                    </Wallet>
-                </div>
+                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
+                            Log in with Google
+                        </button>
 
-                <p className="mt-8 text-center text-xs text-slate-500 relative z-10">
-                    By continuing, you agree to our <a href="#" className="underline hover:text-white">Terms of Service</a> and <a href="#" className="underline hover:text-white">Privacy Policy</a>.
-                </p>
-            </SpotlightCard>
+                        <div className="relative mb-8">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-white/10"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-4 bg-transparent text-slate-500 font-medium">Or continue with email</span>
+                            </div>
+                        </div>
+
+                        {/* Email Form */}
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="space-y-4">
+                                <div className="relative group">
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Email address"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 pl-11 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all hover:bg-black/70"
+                                        required
+                                    />
+                                    <div className="absolute left-3 top-3.5 text-slate-500 group-focus-within:text-blue-500 transition-colors">
+                                        <AtSign className="w-5 h-5" />
+                                    </div>
+                                </div>
+                                <div className="relative group">
+                                    <input
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Password"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 pl-11 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all hover:bg-black/70"
+                                        required
+                                    />
+                                    <div className="absolute left-3 top-3.5 text-slate-500 group-focus-within:text-blue-500 transition-colors">
+                                        <Lock className="w-5 h-5" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <button type="button" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                                    Forgot password?
+                                </button>
+                            </div>
+
+                            <Button
+                                variant="glow"
+                                className="w-full py-3"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+                            </Button>
+                        </form>
+
+                        <p className="text-center text-slate-500 text-sm mt-8">
+                            {isLogin ? "Don't have an account? " : "Already have an account? "}
+                            <button
+                                onClick={() => setIsLogin(!isLogin)}
+                                className="text-white hover:text-blue-400 font-medium transition-colors"
+                            >
+                                {isLogin ? "Sign up" : "Sign in"}
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

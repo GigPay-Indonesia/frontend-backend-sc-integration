@@ -26,7 +26,7 @@ export default function FaucetWidget() {
     const { address } = useAccount();
     const [selectedToken, setSelectedToken] = useState<TokenType>('IDRX');
 
-    const contracts = [
+    const calls = [
         {
             address: FAUCET_CONTRACT_ADDRESS as `0x${string}`,
             abi: FAUCET_ABI,
@@ -40,10 +40,20 @@ export default function FaucetWidget() {
     };
 
     const handleError = (err: any) => {
-        // Basic error handling - checks for common revert strings if available in the error object
-        // Note: Transaction component handles a lot of UI feedback automatically
-        console.error("Faucet Error:", err);
-        toast.error("Failed to claim tokens. You may be on cooldown (24h).");
+        console.error("Faucet Error Details:", err);
+
+        // Try to extract a readable message
+        const errorMessage = err?.shortMessage || err?.message || "Unknown error";
+
+        if (errorMessage.includes("User denied")) {
+            toast.error("Transaction cancelled.");
+        } else if (errorMessage.includes("cooldown")) {
+            toast.error("Cooldown active! Please wait 24h.");
+        } else if (errorMessage.includes("insufficient funds")) {
+            toast.error("Insufficient ETH for gas on Base Sepolia.");
+        } else {
+            toast.error(`Failed: ${errorMessage.slice(0, 50)}...`);
+        }
     };
 
     return (
@@ -90,7 +100,7 @@ export default function FaucetWidget() {
             <div className="relative">
                 {address ? (
                     <Transaction
-                        contracts={contracts}
+                        calls={calls}
                         chainId={84532} // Base Sepolia
                         onSuccess={handleSuccess}
                         onError={handleError}
