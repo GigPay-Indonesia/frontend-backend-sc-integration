@@ -7,8 +7,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
+
 
 model User {
   id                String     @id @default(uuid())
@@ -62,4 +62,272 @@ model Proposal {
 
   // Constraint: A freelancer can only submit one proposal per gig
   @@unique([gigId, freelancerId])
+}
+
+enum RecipientEntityType {
+  VENDOR
+  PARTNER
+  AGENCY
+  CONTRACTOR
+}
+
+enum RecipientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PayoutMethod {
+  ONCHAIN
+  BANK
+  HYBRID
+}
+
+enum SettlementPreference {
+  INSTANT
+  WEEKLY
+  MONTHLY
+}
+
+enum RiskTier {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ApprovalPolicy {
+  AUTO
+  SINGLE
+  MULTI
+  THRESHOLD
+}
+
+enum VendorCategory {
+  SOFTWARE
+  HARDWARE
+  SERVICES
+  LOGISTICS
+  MARKETING
+  OTHER
+}
+
+enum PaymentTerms {
+  NET0
+  NET7
+  NET14
+  NET30
+  MILESTONE_BASED
+}
+
+enum PartnerModel {
+  REVENUE_SHARE
+  PROFIT_SHARE
+  COST_SHARE
+  AFFILIATE
+  REFERRAL
+}
+
+enum SettlementCycle {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  PER_CAMPAIGN
+}
+
+enum TrackingMethod {
+  OFFCHAIN_REPORT
+  ONCHAIN_METRICS
+  MANUAL_APPROVAL
+}
+
+enum AgencyPayoutMode {
+  MASTER_PAYEE
+  SPLIT_TO_TEAM
+  HYBRID
+}
+
+enum EngagementType {
+  FIXED
+  HOURLY
+  RETAINER
+}
+
+enum KycLevel {
+  NONE
+  BASIC
+  VERIFIED
+}
+
+enum DisputePreference {
+  AUTO_ARBITRATION
+  MANUAL_REVIEW
+}
+
+enum EscrowIntentStatus {
+  CREATED
+  FUNDED
+  SUBMITTED
+  RELEASED
+  REFUNDED
+}
+
+model Recipient {
+  id           String             @id @default(uuid())
+  orgId        String?
+  displayName  String
+  legalName    String?
+  entityType   RecipientEntityType
+  billingEmail String
+  country      String
+  timezone     String
+  referenceId  String?
+  status       RecipientStatus    @default(ACTIVE)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  payout       RecipientPayout?
+  accounting   RecipientAccounting?
+  policy       RecipientPolicy?
+  vendorProfile     RecipientProfileVendor?
+  partnerProfile    RecipientProfilePartner?
+  agencyProfile     RecipientProfileAgency?
+  contractorProfile RecipientProfileContractor?
+  splitTemplates    RecipientSplitTemplate[]
+  escrowIntents     EscrowIntent[]
+}
+
+model RecipientPayout {
+  id                   String               @id @default(uuid())
+  recipientId          String               @unique
+  preferredAsset       String
+  payoutMethod         PayoutMethod
+  payoutAddress        String?
+  bankAccountRef       String?
+  settlementPreference SettlementPreference
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  recipient            Recipient            @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model RecipientAccounting {
+  id              String   @id @default(uuid())
+  recipientId     String   @unique
+  counterpartyCode String?
+  costCenter      String?
+  tags            String[]
+
+  recipient       Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model RecipientPolicy {
+  id                      String         @id @default(uuid())
+  recipientId             String         @unique
+  riskTier                RiskTier
+  approvalPolicy          ApprovalPolicy
+  maxSinglePayment        Decimal?       @db.Decimal(18, 2)
+  maxMonthlyLimit         Decimal?       @db.Decimal(18, 2)
+  requiresEscrowDefault   Boolean?
+  requiresMilestonesDefault Boolean?
+
+  recipient               Recipient      @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model RecipientProfileVendor {
+  id               String         @id @default(uuid())
+  recipientId      String         @unique
+  vendorCategory   VendorCategory
+  paymentTerms     PaymentTerms
+  invoiceRequired  Boolean
+  invoiceEmail     String?
+  supportedDocuments String[]
+  billToEntityName String?
+  taxTreatment     String?
+
+  recipient        Recipient      @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model RecipientProfilePartner {
+  id              String         @id @default(uuid())
+  recipientId     String         @unique
+  partnerModel    PartnerModel
+  settlementCycle SettlementCycle
+  defaultSplitBps Int?
+  programId       String?
+  trackingMethod  TrackingMethod
+  kpiTags         String[]
+
+  recipient       Recipient      @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model RecipientProfileAgency {
+  id                      String           @id @default(uuid())
+  recipientId             String           @unique
+  payoutMode              AgencyPayoutMode
+  hasSubRecipients        Boolean
+  acceptanceWindowDefault Int?
+  requiresMilestones      Boolean
+  milestoneTemplate       Json?
+
+  recipient               Recipient        @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model RecipientProfileContractor {
+  id                 String            @id @default(uuid())
+  recipientId        String            @unique
+  engagementType     EngagementType
+  scopeSummary       String
+  preferredPayoutAsset String
+  kycLevel           KycLevel
+  disputePreference  DisputePreference
+
+  recipient          Recipient         @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model RecipientSplitTemplate {
+  id                    String    @id @default(uuid())
+  recipientId           String
+  templateName          String
+  recipientWalletOrRef  String
+  bps                   Int
+
+  recipient             Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model EscrowIntent {
+  id                   String             @id @default(uuid())
+  recipientId          String
+  entityType           RecipientEntityType
+  amount               Decimal            @db.Decimal(18, 2)
+  fundingAsset         String
+  payoutAsset          String
+  releaseCondition     String
+  deadlineDays         Int
+  acceptanceWindowDays Int
+  enableYield          Boolean
+  enableProtection     Boolean
+  splitConfig          Json?
+  milestoneTemplate    Json?
+  notes                String?
+  status               EscrowIntentStatus @default(CREATED)
+  onchainIntentId      BigInt?            @unique
+  evidenceHash         String?
+  createdTxHash        String?
+  fundedTxHash         String?
+  submittedTxHash      String?
+  releasedTxHash       String?
+  refundedTxHash       String?
+  fundedAt             DateTime?
+  submittedAt          DateTime?
+  releasedAt           DateTime?
+  refundedAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  recipient             Recipient         @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model EscrowEventCursor {
+  id                String   @id
+  lastProcessedBlock BigInt
+  updatedAt         DateTime @updatedAt
 }

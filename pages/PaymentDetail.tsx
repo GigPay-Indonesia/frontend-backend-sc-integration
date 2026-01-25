@@ -1,11 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { useReadContract, useWatchContractEvent, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { keccak256, toHex } from 'viem';
 import { getTokenSymbolByAddress } from '../lib/abis';
 import { useEscrowCoreContract, useTreasuryVaultContract } from '../lib/hooks/useGigPayContracts';
+import { getReleaseData, recordEscrowFunded, recordEscrowRefunded, recordEscrowReleased, recordEscrowSubmitted } from '../lib/api';
 
-const statusLabels = ['Created', 'Funded', 'Submitted', 'Released', 'Refunded', 'In Dispute'];
+const statusLabels = ['Created', 'Funded', 'Submitted', 'Released', 'Refunded'];
 
 const parseIntentId = (value?: string) => {
     if (!value) return null;
@@ -24,6 +26,9 @@ export const PaymentDetail: React.FC = () => {
     const treasuryVault = useTreasuryVaultContract();
     const intentId = useMemo(() => parseIntentId(id), [id]);
     const [pendingAction, setPendingAction] = useState<string | null>(null);
+    const [evidenceInput, setEvidenceInput] = useState('');
+    const [submittedEvidenceHash, setSubmittedEvidenceHash] = useState<`0x${string}` | null>(null);
+    const [releaseError, setReleaseError] = useState<string | null>(null);
 
     const intentRead = useReadContract({
         address: escrowCore.address,
@@ -42,7 +47,7 @@ export const PaymentDetail: React.FC = () => {
     });
 
     const { writeContract, data: actionHash } = useWriteContract();
-    const { isLoading: isActionLoading } = useWaitForTransactionReceipt({ hash: actionHash });
+    const { data: actionReceipt, isLoading: isActionLoading, isSuccess: isActionConfirmed } = useWaitForTransactionReceipt({ hash: actionHash });
 
     useWatchContractEvent({
         address: escrowCore.address,
@@ -119,8 +124,31 @@ export const PaymentDetail: React.FC = () => {
         });
     };
 
-    const handleRelease = () => {
+    const handleRelease = async () => {
         if (!intentId || !escrowCore.address) return;
+        setReleaseError(null);
+
+        if (intent?.swapRequired) {
+            try {
+                const releaseData = await getReleaseData(intentId.toString());
+                if (!releaseData.swapData) {
+                    setReleaseError('Swap data not configured for this intent.');
+                    return;
+                }
+                setPendingAction('Release');
+                writeContract({
+                    address: escrowCore.address,
+                    abi: escrowCore.abi,
+                    functionName: 'releaseWithSwap',
+                    args: [intentId, releaseData.swapData],
+                });
+                return;
+            } catch (error) {
+                setReleaseError('Unable to prepare swap release.');
+                return;
+            }
+        }
+
         setPendingAction('Release');
         writeContract({
             address: escrowCore.address,
@@ -140,6 +168,47 @@ export const PaymentDetail: React.FC = () => {
             args: [intentId],
         });
     };
+
+    const handleSubmitWork = () => {
+        if (!intentId || !escrowCore.address || !evidenceInput.trim()) return;
+        const evidenceHash = keccak256(toHex(evidenceInput.trim()));
+        setSubmittedEvidenceHash(evidenceHash);
+        setPendingAction('Submit');
+        writeContract({
+            address: escrowCore.address,
+            abi: escrowCore.abi,
+            functionName: 'submitWork',
+            args: [intentId, evidenceHash],
+        });
+    };
+
+    useEffect(() => {
+        if (!isActionConfirmed || !pendingAction || !intentId || !actionHash) return;
+        const onchainIntentId = intentId.toString();
+
+        const syncAction = async () => {
+            try {
+                if (pendingAction === 'Fund') {
+                    await recordEscrowFunded(onchainIntentId, { txHash: actionReceipt?.transactionHash || actionHash });
+                } else if (pendingAction === 'Submit') {
+                    await recordEscrowSubmitted(onchainIntentId, {
+                        txHash: actionReceipt?.transactionHash || actionHash,
+                        evidenceHash: submittedEvidenceHash || undefined,
+                    });
+                } else if (pendingAction === 'Release') {
+                    await recordEscrowReleased(onchainIntentId, { txHash: actionReceipt?.transactionHash || actionHash });
+                } else if (pendingAction === 'Refund') {
+                    await recordEscrowRefunded(onchainIntentId, { txHash: actionReceipt?.transactionHash || actionHash });
+                }
+            } catch {
+                // Backend sync is best-effort for UI actions.
+            } finally {
+                setPendingAction(null);
+            }
+        };
+
+        syncAction();
+    }, [isActionConfirmed, pendingAction, intentId, actionHash, actionReceipt, submittedEvidenceHash]);
 
     return (
         <div className="min-h-screen bg-[#050505] text-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
@@ -188,7 +257,28 @@ export const PaymentDetail: React.FC = () => {
 
                         <div className="bg-[#0f172a]/40 border border-slate-800 rounded-2xl p-6">
                             <h4 className="text-white font-bold mb-4">Actions</h4>
-                            <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Evidence Summary</label>
+                                    <textarea
+                                        value={evidenceInput}
+                                        onChange={(event) => setEvidenceInput(event.target.value)}
+                                        rows={3}
+                                        placeholder="Describe delivered work or provide a proof reference."
+                                        className="mt-2 w-full rounded-xl border border-slate-800 bg-[#0b1220] px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                                    />
+                                    {submittedEvidenceHash && (
+                                        <p className="mt-2 text-xs text-slate-400">Evidence hash: {submittedEvidenceHash.slice(0, 10)}…{submittedEvidenceHash.slice(-8)}</p>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={handleSubmitWork}
+                                    disabled={isActionLoading || !intentId || !evidenceInput.trim()}
+                                    className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl transition-all disabled:opacity-60"
+                                >
+                                    {pendingAction === 'Submit' && isActionLoading ? 'Submitting...' : 'Submit Work'}
+                                </button>
+                                <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={handleFund}
                                     disabled={isActionLoading || !intentId}
@@ -201,7 +291,7 @@ export const PaymentDetail: React.FC = () => {
                                     disabled={isActionLoading || !intentId}
                                     className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl transition-all"
                                 >
-                                    {pendingAction === 'Release' && isActionLoading ? 'Processing...' : 'Approve Release'}
+                                    {pendingAction === 'Release' && isActionLoading ? 'Processing...' : intent?.swapRequired ? 'Release With Swap' : 'Approve Release'}
                                 </button>
                                 <button className="flex-1 py-3 bg-[#0f172a] border border-slate-700 hover:border-slate-500 text-white font-medium rounded-xl transition-all">
                                     Request Clarification
@@ -213,8 +303,12 @@ export const PaymentDetail: React.FC = () => {
                                 >
                                     {pendingAction === 'Refund' && isActionLoading ? 'Processing...' : 'Initiate Refund'}
                                 </button>
+                                </div>
                             </div>
                         </div>
+                        {releaseError && (
+                            <div className="mt-3 text-xs text-red-300">{releaseError}</div>
+                        )}
                     </div>
 
                     <div className="space-y-6">
@@ -232,6 +326,10 @@ export const PaymentDetail: React.FC = () => {
                                 <div className="flex justify-between text-slate-400">
                                     <span>Status</span>
                                     <span className="text-yellow-400">{statusLabel}</span>
+                                </div>
+                                <div className="flex justify-between text-slate-400">
+                                    <span>Swap Required</span>
+                                    <span className="text-white">{intent?.swapRequired ? 'Yes' : 'No'}</span>
                                 </div>
                                 <div className="flex justify-between text-slate-400">
                                     <span>Protection</span>

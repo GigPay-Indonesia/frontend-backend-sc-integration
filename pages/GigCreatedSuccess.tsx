@@ -18,7 +18,7 @@ export const GigCreatedSuccess: React.FC = () => {
 
     const handleViewOnBaseScan = () => {
         // Since we don't have a real TX hash, we'll open the recipient's address
-        window.open(`https://basescan.org/address/${data.recipient.payoutAddress}`, '_blank');
+        window.open(`https://basescan.org/address/${data.recipient.payout.payoutAddress}`, '_blank');
     };
 
     const handleDownloadReceipt = () => {
@@ -51,12 +51,12 @@ export const GigCreatedSuccess: React.FC = () => {
                     <div className="space-y-4">
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-slate-500 uppercase tracking-wider text-xs font-bold">Recipient</span>
-                            <span className="font-mono text-white text-right break-words max-w-[200px]">{data.recipient.name}</span>
+                            <span className="font-mono text-white text-right break-words max-w-[200px]">{data.recipient.identity.displayName}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-slate-500 uppercase tracking-wider text-xs font-bold">Recipient</span>
-                            <span className="font-mono text-cyan-400 flex items-center gap-2 cursor-pointer hover:text-white transition-colors truncate max-w-[150px]" title={data.recipient.payoutAddress}>
-                                {data.recipient.payoutAddress.slice(0, 6)}...{data.recipient.payoutAddress.slice(-4)} <ExternalLink size={12} />
+                            <span className="font-mono text-cyan-400 flex items-center gap-2 cursor-pointer hover:text-white transition-colors truncate max-w-[150px]" title={data.recipient.payout.payoutAddress}>
+                                {data.recipient.payout.payoutAddress.slice(0, 6)}...{data.recipient.payout.payoutAddress.slice(-4)} <ExternalLink size={12} />
                             </span>
                         </div>
                         <div className="flex justify-between items-center text-sm">

@@ -1,83 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search, SlidersHorizontal, MapPin } from 'lucide-react';
 import { JobCard } from '../components/jobs/JobCard';
 import { useNavigate } from 'react-router-dom';
-
-// Dummy Data (Restoring the rich data from Jobs.tsx)
-const ESCROW_REQUESTS = [
-    {
-        id: 1,
-        title: 'Marketing Agency Retainer',
-        description: 'Escrow a monthly retainer with a 7-day review window and yield enabled during approval.',
-        budget: '45,000,000',
-        tags: ['Retainer', 'Yield', 'IDRX'],
-        client: 'Apex Holdings',
-        clientAvatar: 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?q=80&w=200&auto=format&fit=crop',
-        bannerImage: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=800&auto=format&fit=crop',
-        postedTime: '2h ago',
-        type: 'Fixed Price'
-    },
-    {
-        id: 2,
-        title: 'Equipment Vendor Payment',
-        description: 'Secure vendor payment with a 3-day release window and protection enabled for delivery risk.',
-        budget: '25,000,000',
-        tags: ['Protection', 'Vendor', 'USDC'],
-        client: 'ArtBlock Studio',
-        clientAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop',
-        bannerImage: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=800&auto=format&fit=crop',
-        postedTime: '5h ago',
-        type: 'Fixed Price'
-    },
-    {
-        id: 3,
-        title: 'Logistics Services Escrow',
-        description: 'Payout split between two delivery partners with milestone-based releases.',
-        budget: '8,000,000',
-        tags: ['Split', 'Milestone', 'Yield'],
-        client: 'Base Logistics',
-        clientAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?q=80&w=200&auto=format&fit=crop',
-        bannerImage: 'https://images.unsplash.com/photo-1551817958-c966c429a3e1?q=80&w=800&auto=format&fit=crop',
-        postedTime: '1d ago',
-        type: 'Hourly'
-    },
-    {
-        id: 4,
-        title: 'Agency Split Payout',
-        description: 'Distribute an agency payout to a core team with preset split rules and approval routing.',
-        budget: '15,000,000',
-        tags: ['Split', 'Agency', 'Approval'],
-        client: 'LendV2 Finance',
-        clientAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
-        bannerImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop',
-        postedTime: '1d ago',
-        type: 'Fixed Price'
-    },
-    {
-        id: 5,
-        title: 'Protection + FX Swap',
-        description: 'Release in USD with an RFQ swap on settlement, plus protection coverage.',
-        budget: '12,000,000',
-        tags: ['FX', 'Protection', 'USD'],
-        client: 'SafeMoon3 Finance',
-        clientAvatar: 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=200&auto=format&fit=crop',
-        bannerImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop',
-        postedTime: '2d ago',
-        type: 'Fixed Price'
-    },
-    {
-        id: 6,
-        title: 'Cross-Entity Refund Flow',
-        description: 'Reserve funds with a refund path if delivery misses the deadline.',
-        budget: '5,000,000',
-        tags: ['Refund', 'Deadline', 'Yield'],
-        client: 'Base Newsroom',
-        clientAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
-        bannerImage: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=800&auto=format&fit=crop',
-        postedTime: '3d ago',
-        type: 'Hourly'
-    },
-];
+import { getEscrowIntents } from '../lib/api';
 
 const FILTERS = ['All Requests', 'Yield', 'Protection', 'Split', 'FX'];
 
@@ -91,9 +16,62 @@ export const Explore: React.FC = () => {
     const [isRemoteOnly, setIsRemoteOnly] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [minBudget, setMinBudget] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
+    const [intents, setIntents] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchIntents = async () => {
+            try {
+                const data = await getEscrowIntents();
+                setIntents(data.intents || []);
+                setFetchError(null);
+            } catch (error) {
+                setFetchError('Unable to load escrow intents.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchIntents();
+    }, []);
+
+    const toCard = (intent: any) => {
+        const recipientName = intent?.recipient?.displayName || 'Unknown Recipient';
+        const entityType = intent?.recipient?.entityType || intent?.entityType || 'ESCROW';
+        const amount = typeof intent?.amount === 'string' ? Number(intent.amount) : Number(intent?.amount || 0);
+        const budget = Number.isFinite(amount) ? amount.toLocaleString() : '0';
+        const payoutAsset = intent?.payoutAsset || intent?.fundingAsset || 'IDRX';
+        const splitConfig = Array.isArray(intent?.splitConfig) ? intent.splitConfig : [];
+        const tags = [
+            intent?.enableYield ? 'Yield' : null,
+            intent?.enableProtection ? 'Protection' : null,
+            splitConfig.length > 1 ? 'Split' : null,
+            payoutAsset,
+        ].filter(Boolean);
+        const postedTime = intent?.createdAt ? new Date(intent.createdAt).toLocaleDateString() : 'Recent';
+        const type = intent?.releaseCondition === 'ON_MILESTONE' ? 'Fixed Price' : 'Fixed Price';
+        const notes = intent?.notes || `${entityType} escrow intent`;
+
+        return {
+            id: intent?.id || `${recipientName}-${postedTime}`,
+            title: `${entityType} • ${recipientName}`,
+            description: notes,
+            budget,
+            tags,
+            client: recipientName,
+            clientAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
+            bannerImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop',
+            postedTime,
+            type,
+            onchainIntentId: intent?.onchainIntentId,
+        };
+    };
+
+    const cards = useMemo(() => intents.map(toCard), [intents]);
 
     // Filter Logic
-    const filteredJobs = ESCROW_REQUESTS.filter(job => {
+    const filteredJobs = cards.filter(job => {
         // 1. Search Query
         const matchesSearch =
             job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -130,6 +108,15 @@ export const Explore: React.FC = () => {
                         <p className="text-slate-500 mt-2 max-w-lg">
                             Discover escrow templates tailored to treasury operations, approvals, and protections.
                         </p>
+                        <div className="mt-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold">
+                            {isLoading ? (
+                                <span className="text-slate-400">Loading escrow feed...</span>
+                            ) : fetchError ? (
+                                <span className="text-red-300">Explore feed unavailable</span>
+                            ) : (
+                                <span className="text-emerald-300">{cards.length} escrow intents</span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -218,7 +205,15 @@ export const Explore: React.FC = () => {
 
                 {/* Jobs Grid (Using JobCard component which is Glassmorphic/Banner style) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeInUp">
-                    {filteredJobs.length > 0 ? (
+                    {isLoading ? (
+                        <div className="col-span-full py-20 text-center text-slate-400">
+                            Loading escrow requests...
+                        </div>
+                    ) : fetchError ? (
+                        <div className="col-span-full py-20 text-center text-red-300">
+                            {fetchError}
+                        </div>
+                    ) : filteredJobs.length > 0 ? (
                         filteredJobs.map((job) => (
                             <JobCard
                                 key={job.id}
@@ -261,6 +256,11 @@ export const Explore: React.FC = () => {
                 isOpen={!!selectedJob}
                 onClose={() => setSelectedJob(null)}
                 job={selectedJob}
+                onViewEscrow={() => {
+                    if (selectedJob?.onchainIntentId) {
+                        navigate(`/payments/${selectedJob.onchainIntentId}`);
+                    }
+                }}
                 onApply={() => {
                     navigate('/payments/new', { state: { template: selectedJob } });
                 }}
