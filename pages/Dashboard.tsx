@@ -2,6 +2,7 @@ import React from 'react';
 import { StatsGrid, PendingActionsList, ProfileActions, ActivityPreviewTable, EntitiesPreviewTable } from '../components/dashboard/DashboardComponents';
 import { ShieldCheck } from 'lucide-react';
 import { useAccount } from 'wagmi';
+import { FaucetWidget } from '../components/dashboard/FaucetWidget';
 
 export const Overview: React.FC = () => {
     const { address } = useAccount();
@@ -32,6 +33,9 @@ export const Overview: React.FC = () => {
                         </span>
                     </div>
                 </div>
+
+                {/* Faucet Widget */}
+                <FaucetWidget />
 
                 {/* 1. Stats Grid */}
                 <StatsGrid {...dashboardData} />
