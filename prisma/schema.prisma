@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String     @id @default(uuid())
+  walletAddress     String     @unique
+  email             String?
+  name              String?
+  avatar            String?
+  isVerified        Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  proposals         Proposal[]
+  gigs              Gig[]
+}
+
+model Gig {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  budget      Decimal  @db.Decimal(18, 2)
+  tags        String[]
+  clientId    String
+  isFunded    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client      User     @relation(fields: [clientId], references: [id])
+  proposals   Proposal[]
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Proposal {
+  id               String         @id @default(uuid())
+  coverLetter      String         @db.Text
+  bidAmount        Decimal        @db.Decimal(18, 2)
+  status           ProposalStatus @default(PENDING)
+  
+  gigId            String
+  freelancerId     String // Mapping to User via wallet address logic in code, or direct ID relation
+  
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  gig              Gig            @relation(fields: [gigId], references: [id])
+  freelancer       User           @relation(fields: [freelancerId], references: [id])
+
+  // Constraint: A freelancer can only submit one proposal per gig
+  @@unique([gigId, freelancerId])
+}

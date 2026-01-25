@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, SlidersHorizontal, MapPin } from 'lucide-react';
 import { JobCard } from '../components/jobs/JobCard';
 
-// Dummy Data
+// Dummy Data (Restoring the rich data from Jobs.tsx)
 const JOBS_DATA = [
     {
         id: 1,
@@ -81,10 +81,13 @@ const JOBS_DATA = [
 const FILTERS = ['All Jobs', 'Development', 'Design', 'Marketing', 'Writing'];
 
 import JobDetailsModal from '../components/jobs/JobDetailsModal';
+import { ApplyModal } from '../components/gigs/apply-modal';
 
-export const Jobs: React.FC = () => {
+export const Explore: React.FC = () => {
     const [activeFilter, setActiveFilter] = useState('All Jobs');
     const [selectedJob, setSelectedJob] = useState<any>(null);
+    const [applyGig, setApplyGig] = useState<any>(null);
+    const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [isRemoteOnly, setIsRemoteOnly] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
@@ -109,7 +112,7 @@ export const Jobs: React.FC = () => {
         // 3. Remote Filter
         const matchesRemote = !isRemoteOnly || true;
 
-        // 4. Budget Filter (Simple Implementation)
+        // 4. Budget Filter
         const jobBudget = parseInt(job.budget.replace(/,/g, ''));
         const matchesBudget = jobBudget >= minBudget;
 
@@ -117,7 +120,7 @@ export const Jobs: React.FC = () => {
     });
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-[#050505] text-white pt-10 pb-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6 animate-fadeIn">
@@ -147,8 +150,8 @@ export const Jobs: React.FC = () => {
                         <button
                             onClick={() => setShowFilters(!showFilters)}
                             className={`px-6 py-3 border rounded-xl transition-all flex items-center gap-2 font-medium whitespace-nowrap ${showFilters
-                                    ? 'bg-slate-800 border-slate-700 text-white'
-                                    : 'bg-[#0a0a0a] border-slate-800 text-slate-400 hover:bg-slate-900'
+                                ? 'bg-slate-800 border-slate-700 text-white'
+                                : 'bg-[#0a0a0a] border-slate-800 text-slate-400 hover:bg-slate-900'
                                 }`}
                         >
                             <SlidersHorizontal size={18} /> Filters
@@ -156,8 +159,8 @@ export const Jobs: React.FC = () => {
                         <button
                             onClick={() => setIsRemoteOnly(!isRemoteOnly)}
                             className={`px-6 py-3 border rounded-xl transition-all flex items-center gap-2 font-medium whitespace-nowrap ${isRemoteOnly
-                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400'
-                                    : 'bg-[#0a0a0a] border-slate-800 text-slate-400 hover:bg-slate-900'
+                                ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400'
+                                : 'bg-[#0a0a0a] border-slate-800 text-slate-400 hover:bg-slate-900'
                                 }`}
                         >
                             <MapPin size={18} /> Remote Only
@@ -214,7 +217,7 @@ export const Jobs: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Jobs Grid */}
+                {/* Jobs Grid (Using JobCard component which is Glassmorphic/Banner style) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeInUp">
                     {filteredJobs.length > 0 ? (
                         filteredJobs.map((job) => (
@@ -230,6 +233,11 @@ export const Jobs: React.FC = () => {
                                 postedTime={job.postedTime}
                                 type={job.type as any}
                                 onView={() => setSelectedJob(job)}
+                                onApply={(e) => {
+                                    e.stopPropagation();
+                                    setApplyGig(job);
+                                    setIsApplyModalOpen(true);
+                                }}
                             />
                         ))
                     ) : (
@@ -250,12 +258,34 @@ export const Jobs: React.FC = () => {
                 </div>
             </div>
 
-            {/* Job Details Modal */}
+            {/* Job Details Modal - The premium detail view */}
             <JobDetailsModal
                 isOpen={!!selectedJob}
                 onClose={() => setSelectedJob(null)}
                 job={selectedJob}
+                onApply={() => {
+                    // When applying from Details Modal, keep selectedJob but set applying state
+                    // We need proper state management for the apply modal
+                    // For now, let's close details and open apply, or overlay it
+                    setIsApplyModalOpen(true);
+                    setApplyGig(selectedJob);
+                    setSelectedJob(null); // Optional: Close details to focus on apply
+                }}
             />
+
+            {/* Application Modal */}
+            {applyGig && (
+                <ApplyModal
+                    isOpen={isApplyModalOpen}
+                    onClose={() => {
+                        setIsApplyModalOpen(false);
+                        setApplyGig(null);
+                    }}
+                    gigId={applyGig.id.toString()}
+                    gigTitle={applyGig.title}
+                    budget={applyGig.budget}
+                />
+            )}
         </div>
     );
 };

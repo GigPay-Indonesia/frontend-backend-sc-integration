@@ -15,8 +15,9 @@ export const StatsGrid: React.FC<DashboardData> = ({ walletBalance, inEscrow, yi
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
             {/* Balance Card */}
-            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-5 relative overflow-hidden group hover:border-slate-600 transition-all duration-300">
+            <div className="bg-[#0f172a]/30 border border-slate-800 backdrop-blur-md rounded-3xl p-5 relative overflow-hidden group hover:border-slate-600 transition-all duration-300 shadow-xl">
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="absolute -top-10 -right-10 w-24 h-24 bg-slate-500/10 rounded-full blur-2xl group-hover:bg-slate-500/20 transition-all"></div>
 
@@ -40,7 +41,7 @@ export const StatsGrid: React.FC<DashboardData> = ({ walletBalance, inEscrow, yi
             </div>
 
             {/* Escrow Card */}
-            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-5 relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-300">
+            <div className="bg-[#0f172a]/30 border border-slate-800 backdrop-blur-md rounded-3xl p-5 relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-300 shadow-xl">
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="absolute -top-10 -right-10 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all"></div>
 
@@ -58,7 +59,7 @@ export const StatsGrid: React.FC<DashboardData> = ({ walletBalance, inEscrow, yi
             </div>
 
             {/* Yield Card */}
-            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-5 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
+            <div className="bg-[#0f172a]/30 border border-slate-800 backdrop-blur-md rounded-3xl p-5 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300 shadow-xl">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
 
@@ -79,7 +80,7 @@ export const StatsGrid: React.FC<DashboardData> = ({ walletBalance, inEscrow, yi
             </div>
 
             {/* Active Gigs Card */}
-            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-5 relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
+            <div className="bg-[#0f172a]/30 border border-slate-800 backdrop-blur-md rounded-3xl p-5 relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300 shadow-xl">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="absolute -top-10 -right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all"></div>
 
@@ -107,7 +108,7 @@ export const ActiveGigsList: React.FC = () => {
 
     if (activeGigs.length === 0) {
         return (
-            <div className="bg-[#0a0a0a] border border-slate-800 rounded-3xl p-1 relative overflow-hidden group h-full min-h-[400px]">
+            <div className="bg-[#0f172a]/30 border border-slate-800 backdrop-blur-md rounded-3xl p-1 relative overflow-hidden group min-h-[300px] shadow-xl">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-black"></div>
 
@@ -127,7 +128,7 @@ export const ActiveGigsList: React.FC = () => {
     }
 
     return (
-        <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-6 h-full relative overflow-hidden">
+        <div className="bg-[#0f172a]/30 border border-slate-800 backdrop-blur-md rounded-3xl p-6 relative overflow-hidden shadow-xl">
             {/* Background Effects */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-900/10 rounded-full blur-[100px] pointer-events-none"></div>
 
@@ -199,7 +200,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({ walletAddress })
     const displayAddress = walletAddress ? `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}` : 'UNKNOWN';
 
     return (
-        <div className="space-y-6 h-full flex flex-col">
+        <div className="space-y-6 flex flex-col">
             {/* Identity Card - Futuristic Design */}
             <FuturisticProfileCard
                 name="Zennz"
@@ -210,7 +211,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({ walletAddress })
             />
 
             {/* Quick Actions */}
-            <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl p-6 flex-1 flex flex-col justify-center min-h-[220px]">
+            <div className="bg-[#0f172a]/30 border border-slate-800 backdrop-blur-md rounded-3xl p-6 flex flex-col justify-center shadow-xl">
                 <h4 className="text-slate-500 font-bold mb-4 text-xs uppercase tracking-widest">Quick Actions</h4>
                 <div className="space-y-3">
                     <a href="/#/create-gig" className="flex items-center justify-between w-full p-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-2xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.15)] hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:scale-[1.02] group">
@@ -247,7 +248,7 @@ export const RecentActivityTable: React.FC = () => {
     ];
 
     return (
-        <div className="bg-[#0a0a0a] border border-slate-800/60 rounded-3xl overflow-hidden min-h-[300px]">
+        <div className="bg-[#0f172a]/30 border border-slate-800 backdrop-blur-md rounded-3xl overflow-hidden min-h-[300px] shadow-xl">
             <div className="p-6 border-b border-slate-800/50 flex justify-between items-center bg-slate-900/20">
                 <h4 className="text-white font-black flex items-center gap-3 text-lg">
                     <Activity size={20} className="text-slate-500" />

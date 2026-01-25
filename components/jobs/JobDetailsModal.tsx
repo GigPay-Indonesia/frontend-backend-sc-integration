@@ -6,9 +6,10 @@ interface JobDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     job: any; // We'll refine this type later
+    onApply?: () => void;
 }
 
-const JobDetailsModal: React.FC<JobDetailsModalProps> = ({ isOpen, onClose, job }) => {
+const JobDetailsModal: React.FC<JobDetailsModalProps> = ({ isOpen, onClose, job, onApply }) => {
     if (!job) return null;
 
     return (
@@ -135,7 +136,10 @@ const JobDetailsModal: React.FC<JobDetailsModalProps> = ({ isOpen, onClose, job 
                                         <Share2 size={20} />
                                     </button>
                                 </div>
-                                <button className="w-full sm:w-auto flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/25 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                                <button
+                                    onClick={onApply}
+                                    className="w-full sm:w-auto flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/25 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                                >
                                     <Zap size={18} className="fill-white" />
                                     Apply Now
                                 </button>

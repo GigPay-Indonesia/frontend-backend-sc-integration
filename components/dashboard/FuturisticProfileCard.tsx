@@ -33,7 +33,7 @@ const FuturisticProfileCard: React.FC<FuturisticProfileCardProps> = ({
     };
 
     return (
-        <div className="relative group perspective-1000 w-full h-full min-h-[320px]">
+        <div className="relative group perspective-1000 w-full min-h-[320px]">
             {/* Ambient Glow */}
             <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 via-purple-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 blur-3xl transition-opacity duration-700"></div>
 
@@ -41,7 +41,7 @@ const FuturisticProfileCard: React.FC<FuturisticProfileCardProps> = ({
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative h-full bg-[#050505] border border-slate-800 hover:border-slate-700 rounded-[32px] overflow-hidden flex flex-col transition-colors duration-300"
+                className="relative bg-[#050505] border border-slate-800 hover:border-slate-700 rounded-[32px] overflow-hidden flex flex-col transition-colors duration-300"
             >
                 {/* Top Section - Signal & Chip */}
                 <div className="p-6 pb-0 flex justify-between items-start z-10">
