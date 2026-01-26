@@ -22,7 +22,7 @@ export const Step5Review: React.FC<Step5Props> = ({ data }) => {
                         </div>
                         <div className="flex-1">
                             <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Recipient</h4>
-                            <p className="text-lg font-bold text-white mb-2 underline decoration-cyan-500/30 underline-offset-4 decoration-2">
+                            <p className="text-lg font-bold text-white mb-2 underline decoration-blue-500/30 underline-offset-4 decoration-2">
                                 {data.recipient.name || 'Unnamed Entity'}
                             </p>
                             <p className="text-slate-400 text-sm mb-2">{data.recipient.type} • {data.recipient.email}</p>
@@ -90,8 +90,8 @@ export const Step5Review: React.FC<Step5Props> = ({ data }) => {
                 </div>
             </div>
 
-            <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 flex gap-3 items-center">
-                <CheckCircle2 className="text-cyan-400 shrink-0" size={24} />
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-3 items-center">
+                <CheckCircle2 className="text-blue-400 shrink-0" size={24} />
                 <div>
                     <h4 className="text-sm font-bold text-white">Ready to Create</h4>
                     <p className="text-xs text-slate-400">
