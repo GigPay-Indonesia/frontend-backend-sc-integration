@@ -21,6 +21,9 @@ export const Treasury: React.FC = () => {
 
     return (
         <div className="min-h-screen text-white pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            {/* Background Effects */}
+            <div className="pointer-events-none absolute -top-32 -left-20 h-72 w-72 rounded-full bg-blue-500/10 blur-[120px]" />
+            <div className="pointer-events-none absolute top-40 -right-24 h-80 w-80 rounded-full bg-purple-500/10 blur-[140px]" />
             {/* Add Funds Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">

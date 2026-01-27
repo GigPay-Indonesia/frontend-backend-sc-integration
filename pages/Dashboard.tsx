@@ -1,5 +1,5 @@
 import React from 'react';
-import { StatsGrid, PendingActionsList, ProfileActions, ActivityPreviewTable, EntitiesPreviewTable } from '../components/dashboard/DashboardComponents';
+import { StatsGrid, PendingActionsList, ProfileActions, ActivityPreviewTable, EntitiesPreviewTable, QuickActionsCard } from '../components/dashboard/DashboardComponents';
 import { ShieldCheck } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { FaucetWidget } from '../components/dashboard/FaucetWidget';
@@ -19,8 +19,11 @@ export const Overview: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#050505] pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-[#050505] pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            {/* Background Effects */}
+            <div className="pointer-events-none absolute -top-32 -left-20 h-72 w-72 rounded-full bg-blue-500/10 blur-[120px]" />
+            <div className="pointer-events-none absolute top-40 -right-24 h-80 w-80 rounded-full bg-purple-500/10 blur-[140px]" />
+            <div className="max-w-7xl mx-auto relative z-10">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
@@ -39,6 +42,11 @@ export const Overview: React.FC = () => {
 
                 {/* Faucet Widget */}
                 <FaucetWidget />
+
+                {/* Quick Actions */}
+                <div className="mt-4 mb-6 flex justify-end">
+                    <QuickActionsCard />
+                </div>
 
                 {/* 1. Stats Grid */}
                 <StatsGrid {...dashboardData} />

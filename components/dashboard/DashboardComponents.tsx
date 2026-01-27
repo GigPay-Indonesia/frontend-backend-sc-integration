@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, Lock, TrendingUp, Activity, ExternalLink, ArrowRight, Zap, CreditCard } from 'lucide-react';
+import { Wallet, Lock, TrendingUp, Activity, ExternalLink, ArrowRight, Zap } from 'lucide-react';
 
 // --- Types ---
 export interface OverviewData {
@@ -254,33 +254,26 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({ walletAddress })
                 walletAddress={walletAddress}
                 avatarUrl={profile?.avatarUrl || '/avatars/alex.png'}
             />
-
-            {/* Quick Actions */}
-            <div className="bg-[#0f172a]/30 border border-slate-800 backdrop-blur-md rounded-3xl p-6 flex flex-col justify-center shadow-xl">
-                <h4 className="text-slate-500 font-bold mb-4 text-xs uppercase tracking-widest">Quick Actions</h4>
-                <div className="space-y-3">
-                    <a href="/#/payments/new" className="flex items-center justify-between w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-2xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.15)] hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:scale-[1.02] group">
-                        <span className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                                <Zap size={16} className="text-white fill-current" />
-                            </div>
-                            Create Payment
-                        </span>
-                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                    </a>
-
-                    <button className="flex items-center justify-between w-full p-4 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-bold rounded-2xl transition-all group hover:bg-slate-800">
-                        <span className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center group-hover:bg-slate-700 group-hover:border-slate-600">
-                                <CreditCard size={16} />
-                            </div>
-                            Add Funds
-                        </span>
-                        <ExternalLink size={16} className="text-slate-500 group-hover:text-white transition-colors" />
-                    </button>
-                </div>
-            </div>
         </div>
+    );
+};
+
+interface QuickActionsCardProps {
+    className?: string;
+}
+
+export const QuickActionsCard: React.FC<QuickActionsCardProps> = ({ className }) => {
+    return (
+        <a
+            href="/#/payments/new"
+            className={`inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.15)] hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:scale-[1.02] group ${className ?? ''}`}
+        >
+            <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                <Zap size={14} className="text-white fill-current" />
+            </div>
+            Create Payment
+            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+        </a>
     );
 };
 

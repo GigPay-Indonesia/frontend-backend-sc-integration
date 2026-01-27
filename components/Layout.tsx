@@ -69,16 +69,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, userRole, walletAddres
       <PillNav
         logo={<div className="flex items-center"><Logo className="h-9 w-auto text-white" light /></div>}
         items={navItems}
-        baseColor="#111"
-        pillColor="transparent"
-        pillTextColor="#cbd5e1"
-        hoveredPillTextColor="#fff"
+        baseColor="#1f2937"
+        pillColor="#0f172a"
+        pillTextColor="#e2e8f0"
+        hoveredPillTextColor="#f8fafc"
         rightContent={
           userRole ? (
             <div className="relative z-50">
               <Wallet>
                 {isConnected ? (
-                  <ConnectWallet className="bg-transparent hover:bg-white/10 text-white rounded-full transition-all">
+                  <ConnectWallet className="bg-white/15 border border-white/25 hover:bg-white/25 text-white rounded-full transition-all px-3 py-2 gap-2 shadow-[0_0_12px_rgba(255,255,255,0.15)]">
                     <Avatar className="h-6 w-6" />
                     <Name />
                   </ConnectWallet>
@@ -103,7 +103,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, userRole, walletAddres
       />
 
 
-      <main className="flex-grow pt-16 pb-24 relative">
+      <main className="flex-grow pt-0 pb-24 relative">
         {children}
       </main>
 
