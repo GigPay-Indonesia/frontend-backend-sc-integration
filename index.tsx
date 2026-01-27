@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import '@coinbase/onchainkit/styles.css';
+import './index.css'; // Global styles and animations
 import App from './App';
 
 const rootElement = document.getElementById('root');

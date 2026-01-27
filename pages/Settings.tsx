@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Wallet, Settings as SettingsIcon, ChevronRight } from 'lucide-react';
+import { User, Wallet, Settings as SettingsIcon, ChevronRight, LogOut } from 'lucide-react';
+import { useDisconnect } from 'wagmi';
 import SettingsProfile from '../components/settings/SettingsProfile';
 import SettingsWallet from '../components/settings/SettingsWallet';
 import SettingsPreferences from '../components/settings/SettingsPreferences';
 
 export const Settings: React.FC = () => {
+    const { disconnect } = useDisconnect();
     const [activeTab, setActiveTab] = useState<'profile' | 'wallet' | 'preferences'>('profile');
 
     const tabs = [
@@ -72,6 +74,18 @@ export const Settings: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Logout Button */}
+            <div className="mt-8 md:hidden">
+                <button
+                    onClick={() => disconnect()}
+                    className="w-full flex items-center justify-center gap-2 bg-red-500/10 border border-red-500/20 text-red-500 font-bold py-4 rounded-xl hover:bg-red-500/20 transition-all active:scale-[0.98]"
+                >
+                    <LogOut size={20} />
+                    Disconnect Wallet
+                </button>
+            </div>
         </div>
+
     );
 };

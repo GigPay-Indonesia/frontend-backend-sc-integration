@@ -214,27 +214,41 @@ export const Treasury: React.FC = () => {
             <div className="max-w-7xl mx-auto relative z-10">
 
                 {/* Header & TVL Command Center */}
-                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12">
-                    <div className="space-y-4">
+                <div className="flex flex-col mb-12">
+                    <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+                        <div className="space-y-4">
+                            <h1 className="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-600 tracking-tighter drop-shadow-2xl">
+                                Treasury
+                            </h1>
+                            <p className="text-slate-400 max-w-lg leading-relaxed text-sm font-medium">
+                                Real-time monitoring of all protocol assets, yield strategies, and liquid allocations. Managed by the GigPay DAO Policy.
+                            </p>
+                        </div>
 
-                        <h1 className="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-600 tracking-tighter drop-shadow-2xl">
-                            Treasury
-                        </h1>
-                        <p className="text-slate-400 max-w-lg leading-relaxed text-sm font-medium">
-                            Real-time monitoring of all protocol assets, yield strategies, and liquid allocations. Managed by the GigPay DAO Policy.
-                        </p>
+                        {/* Quick Actions Panel (Desktop) */}
+                        <div className="hidden lg:flex gap-4">
+                            <button
+                                onClick={() => setIsModalOpen(true)}
+                                className="px-8 py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-500 transition-all shadow-2xl hover:shadow-[0_0_40px_rgba(37,99,235,0.5)] hover:-translate-y-1 active:translate-y-0 text-sm flex items-center gap-2"
+                            >
+                                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span> Add Funds
+                            </button>
+                            <button className="px-8 py-4 bg-white/[0.05] text-white font-bold rounded-2xl hover:bg-white/10 transition-all text-sm backdrop-blur-md hover:-translate-y-1 border border-white/5">
+                                Manage Strategy
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Quick Actions Panel */}
-                    <div className="flex gap-4">
+                    {/* Quick Actions Mobile (New Layout) */}
+                    <div className="flex gap-4 mt-8 lg:hidden">
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="px-8 py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-500 transition-all shadow-2xl hover:shadow-[0_0_40px_rgba(37,99,235,0.5)] hover:-translate-y-1 active:translate-y-0 text-sm flex items-center gap-2"
+                            className="flex-1 py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-500 transition-all shadow-lg active:scale-95 text-sm flex items-center justify-center gap-2"
                         >
                             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span> Add Funds
                         </button>
-                        <button className="px-8 py-4 bg-white/[0.05] text-white font-bold rounded-2xl hover:bg-white/10 transition-all text-sm backdrop-blur-md hover:-translate-y-1 border border-white/5">
-                            Manage Strategy
+                        <button className="flex-1 py-4 bg-[#1e293b] text-white font-bold rounded-2xl hover:bg-slate-700 transition-all text-sm active:scale-95 border border-white/5 flex items-center justify-center gap-2">
+                            <TrendingUp size={16} /> Manage
                         </button>
                     </div>
                 </div>
@@ -245,22 +259,21 @@ export const Treasury: React.FC = () => {
                 {/* Charts Section */}
                 <TreasuryCharts allocationData={allocationData} />
 
-                {/* Lower Section: Activity & Breakdown */}
+                {/* Lower Section: Breakdown & Activity */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                    {/* Activity Feed */}
-                    <div className="lg:col-span-2">
-                        <TreasuryActivity activities={activities} isLoading={isActivityLoading} />
-                    </div>
-
-                    {/* Breakdown & Info Side Panel */}
-                    <div className="space-y-8">
+                    {/* Breakdown & Info Side Panel (First on Mobile, Right on Desktop) */}
+                    <div className="lg:col-span-1 lg:col-start-3 lg:row-start-1 space-y-8">
                         {/* Compact Asset Breakdown */}
-                        <div className="bg-[#0a0a0a]/40 rounded-[2rem] p-8 backdrop-blur-sm hover:bg-[#0a0a0a]/60 transition-all duration-500 group">
-                            <h4 className="text-white font-black mb-6 flex items-center gap-3 text-sm uppercase tracking-wider">
-                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400 group-hover:bg-white group-hover:scale-150 transition-all"></div>
-                                Asset Breakdown
-                            </h4>
+                        <div className="bg-[#0a0a0a]/40 rounded-[2rem] p-8 backdrop-blur-sm hover:bg-[#0a0a0a]/60 transition-all duration-500 group border border-white/5">
+                            <div className="flex justify-between items-center mb-6">
+                                <h4 className="text-white font-black flex items-center gap-3 text-sm uppercase tracking-wider">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-400 group-hover:bg-white group-hover:scale-150 transition-all"></div>
+                                    Asset Breakdown
+                                </h4>
+                                <button className="text-[10px] font-bold text-blue-400 hover:text-white uppercase tracking-wider">View All</button>
+                            </div>
+
                             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                                 {assets && assets.length > 0 ? (
                                     assets.map((asset) => (
@@ -298,7 +311,7 @@ export const Treasury: React.FC = () => {
                         </div>
 
                         {/* Info Card */}
-                        <div className="bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] rounded-[2rem] p-8 relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 shadow-2xl">
+                        <div className="bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] rounded-[2rem] p-8 relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 shadow-2xl border border-white/5">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-600/20 transition-all duration-500"></div>
 
                             <h4 className="text-purple-300 font-black mb-4 text-xs uppercase tracking-widest flex items-center gap-2 relative z-10">
@@ -316,6 +329,11 @@ export const Treasury: React.FC = () => {
                                 View Contract <ArrowUpRight size={12} />
                             </a>
                         </div>
+                    </div>
+
+                    {/* Activity Feed (Second on Mobile, Left on Desktop) */}
+                    <div className="lg:col-span-2 lg:row-start-1">
+                        <TreasuryActivity activities={activities} isLoading={isActivityLoading} />
                     </div>
                 </div>
             </div>

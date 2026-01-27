@@ -15,78 +15,112 @@ export const TreasuryStats: React.FC<TreasuryStatsProps> = ({ treasuryBalance = 
     const yieldDiff = "+4.2% APY";
     const liquidityRatio = "82%";
 
+    const [activeIndex, setActiveIndex] = React.useState(0);
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+    const handleScroll = () => {
+        if (scrollContainerRef.current) {
+            const { scrollLeft, clientWidth } = scrollContainerRef.current;
+            const newIndex = Math.round(scrollLeft / clientWidth);
+            setActiveIndex(newIndex);
+        }
+    };
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {/* 1. Total Treasury Balance */}
-            <div className="bg-[#0a0a0a]/40 backdrop-blur-md rounded-3xl p-8 border border-white/5 relative group overflow-hidden hover:bg-[#0a0a0a]/60 transition-all duration-500">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
 
-                <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(37,99,235,0.2)]">
-                        <Wallet size={24} />
+        <div className="relative mb-12">
+            {/* Scroll Container */}
+            <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto pb-6 md:pb-0 snap-x snap-mandatory hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0"
+            >
+                {/* 1. Total Treasury Balance */}
+                <div className="min-w-[90%] md:min-w-0 snap-center bg-[#0a0a0a]/40 backdrop-blur-md rounded-[2rem] p-8 border border-white/5 relative group overflow-hidden hover:bg-[#0a0a0a]/60 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
+
+                    <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(37,99,235,0.2)]">
+                            <Wallet size={24} />
+                        </div>
+                        <span className="flex items-center gap-1 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20">
+                            <TrendingUp size={12} /> {balanceDiff}
+                        </span>
                     </div>
-                    <span className="flex items-center gap-1 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20">
-                        <TrendingUp size={12} /> {balanceDiff}
-                    </span>
+
+                    <div className="relative z-10">
+                        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Total Balance</p>
+                        <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4 font-mono">
+                            {treasuryBalance}
+                        </h3>
+                        <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
+                            <span>Available Liquidity</span>
+                            <span className="text-white">$150,000.00</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-800/50 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 w-[65%] shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="relative z-10">
-                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Total Balance</p>
-                    <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4 font-mono">
-                        {treasuryBalance}
-                    </h3>
-                    <div className="h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-blue-600 to-indigo-400 w-[82%] shadow-[0_0_10px_rgba(37,99,235,0.5)]"></div>
+                {/* 2. Yield Position */}
+                <div className="min-w-[90%] md:min-w-0 snap-center bg-[#0a0a0a]/40 backdrop-blur-md rounded-[2rem] p-8 border border-white/5 relative group overflow-hidden hover:bg-[#0a0a0a]/60 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 group-hover:bg-purple-500/20 transition-all duration-500"></div>
+
+                    <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-400 border border-purple-500/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                            <Activity size={24} />
+                        </div>
+                        <span className="flex items-center gap-1 text-purple-400 text-xs font-bold bg-purple-500/10 px-2 py-1 rounded-lg border border-purple-500/20">
+                            {yieldDiff}
+                        </span>
+                    </div>
+
+                    <div className="relative z-10">
+                        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Yield Position</p>
+                        <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4 font-mono">
+                            {inYield}
+                        </h3>
+                        <div className="h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-purple-600 to-fuchsia-400 w-[18%] shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Operational Liquidity */}
+                <div className="min-w-[90%] md:min-w-0 snap-center bg-[#0a0a0a]/40 backdrop-blur-md rounded-[2rem] p-8 border border-white/5 relative group overflow-hidden hover:bg-[#0a0a0a]/60 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 group-hover:bg-emerald-500/20 transition-all duration-500"></div>
+
+                    <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                            <Zap size={24} />
+                        </div>
+                        <span className="flex items-center gap-1 text-slate-400 text-xs font-bold bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-700/50">
+                            Stable
+                        </span>
+                    </div>
+
+                    <div className="relative z-10">
+                        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Liquidity Ratio</p>
+                        <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4 font-mono">
+                            {liquidityRatio}
+                        </h3>
+                        <div className="h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 w-[82%] shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* 2. Yield Position */}
-            <div className="bg-[#0a0a0a]/40 backdrop-blur-md rounded-3xl p-8 border border-white/5 relative group overflow-hidden hover:bg-[#0a0a0a]/60 transition-all duration-500">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 group-hover:bg-purple-500/20 transition-all duration-500"></div>
-
-                <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-400 border border-purple-500/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
-                        <Activity size={24} />
-                    </div>
-                    <span className="flex items-center gap-1 text-purple-400 text-xs font-bold bg-purple-500/10 px-2 py-1 rounded-lg border border-purple-500/20">
-                        {yieldDiff}
-                    </span>
-                </div>
-
-                <div className="relative z-10">
-                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Yield Position</p>
-                    <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4 font-mono">
-                        {inYield}
-                    </h3>
-                    <div className="h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-purple-600 to-fuchsia-400 w-[18%] shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
-                    </div>
-                </div>
-            </div>
-
-            {/* 3. Operational Liquidity */}
-            <div className="bg-[#0a0a0a]/40 backdrop-blur-md rounded-3xl p-8 border border-white/5 relative group overflow-hidden hover:bg-[#0a0a0a]/60 transition-all duration-500">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 group-hover:bg-emerald-500/20 transition-all duration-500"></div>
-
-                <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                        <Zap size={24} />
-                    </div>
-                    <span className="flex items-center gap-1 text-slate-400 text-xs font-bold bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-700/50">
-                        Stable
-                    </span>
-                </div>
-
-                <div className="relative z-10">
-                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Liquidity Ratio</p>
-                    <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4 font-mono">
-                        {liquidityRatio}
-                    </h3>
-                    <div className="h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 w-[82%] shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                    </div>
-                </div>
+            {/* Animated Carousel Indicators (Mobile Only) */}
+            <div className="flex justify-center gap-2 md:hidden">
+                {[0, 1, 2].map((index) => (
+                    <div
+                        key={index}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${activeIndex === index ? 'w-8 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'w-1.5 bg-slate-800 hover:bg-slate-700'
+                            }`}
+                    ></div>
+                ))}
             </div>
         </div>
     );

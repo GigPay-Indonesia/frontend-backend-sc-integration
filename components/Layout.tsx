@@ -20,6 +20,7 @@ import {
 } from '@coinbase/onchainkit/identity';
 import { useAccount } from 'wagmi';
 import { Dock, defaultDockItems } from './ui/Dock';
+import { MobileProfileNav } from './header/MobileProfileNav';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -75,21 +76,30 @@ export const Layout: React.FC<LayoutProps> = ({ children, userRole, walletAddres
         hoveredPillTextColor="#f8fafc"
         rightContent={
           userRole ? (
-            <div className="relative z-50">
-              <Wallet>
-                {isConnected ? (
-                  <ConnectWallet className="bg-white/15 border border-white/25 hover:bg-white/25 text-white rounded-full transition-all px-3 py-2 gap-2 shadow-[0_0_12px_rgba(255,255,255,0.15)]">
-                    <Avatar className="h-6 w-6" />
-                    <Name />
-                  </ConnectWallet>
-                ) : (
-                  <WalletSelector />
-                )}
-                <WalletDropdown>
-                  <WalletDropdownDisconnect />
-                </WalletDropdown>
-              </Wallet>
+            <div className="relative z-50 flex items-center gap-2">
+              {/* Desktop: Wallet Connect */}
+              <div className="hidden md:inline-flex relative items-center">
+                <Wallet>
+                  {isConnected ? (
+                    <ConnectWallet className="bg-white/15 border border-white/25 hover:bg-white/25 text-white rounded-full transition-all px-3 py-2 gap-2 shadow-[0_0_12px_rgba(255,255,255,0.15)] flex items-center">
+                      <Avatar className="h-6 w-6" />
+                      <Name />
+                    </ConnectWallet>
+                  ) : (
+                    <WalletSelector />
+                  )}
+                  <WalletDropdown className="absolute top-[calc(100%+10px)] right-0 w-60 bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl p-2 z-[100]">
+                    <WalletDropdownDisconnect className="w-full justify-center px-4 py-3 hover:bg-white/5 rounded-xl transition-colors text-slate-300 hover:text-white font-medium cursor-pointer flex items-center gap-2" />
+                  </WalletDropdown>
+                </Wallet>
+              </div>
+
+              {/* Mobile: Custom Profile Nav */}
+              <div className="md:hidden">
+                <MobileProfileNav />
+              </div>
             </div>
+
           ) : (
             <Button
               onClick={() => navigate('/login')}

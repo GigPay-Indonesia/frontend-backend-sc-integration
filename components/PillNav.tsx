@@ -401,7 +401,7 @@ const PillNav: React.FC<PillNavProps> = ({
 
                 {/* Right: Wallet + Mobile Menu Toggle */}
                 <div className="flex justify-end items-center gap-2">
-                    <div className="hidden md:block" ref={rightContentRef}>
+                    <div className="block" ref={rightContentRef}>
                         {rightContent}
                     </div>
 
