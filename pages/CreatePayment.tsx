@@ -203,6 +203,141 @@ export const CreatePayment: React.FC = () => {
         setPaymentData(prev => ({ ...prev, [field]: value }));
     };
 
+    const formatThousands = (raw: string) => {
+        const digits = raw.replace(/[^0-9]/g, '');
+        if (!digits) return '';
+        return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    useEffect(() => {
+        const resume = (location.state as any)?.resumeEscrowIntent;
+        if (!resume) return;
+
+        try {
+            const r = resume.recipient || {};
+            const payout = r.payout || {};
+            const accounting = r.accounting || {};
+            const policy = r.policy || {};
+
+            const entityType = (resume.entityType || r.entityType || 'VENDOR') as EntityType;
+
+            const profile: RecipientProfile =
+                entityType === 'VENDOR'
+                    ? {
+                        type: 'VENDOR',
+                        vendorCategory: r.vendorProfile?.vendorCategory || 'SERVICES',
+                        paymentTerms: r.vendorProfile?.paymentTerms || 'NET14',
+                        invoiceRequired: Boolean(r.vendorProfile?.invoiceRequired),
+                        invoiceEmail: r.vendorProfile?.invoiceEmail || '',
+                        supportedDocuments: r.vendorProfile?.supportedDocuments || ['Invoice'],
+                        billToEntityName: r.vendorProfile?.billToEntityName || '',
+                        taxTreatment: r.vendorProfile?.taxTreatment || '',
+                    }
+                    : entityType === 'PARTNER'
+                        ? {
+                            type: 'PARTNER',
+                            partnerModel: r.partnerProfile?.partnerModel || 'REVENUE_SHARE',
+                            settlementCycle: r.partnerProfile?.settlementCycle || 'MONTHLY',
+                            defaultSplitBps: r.partnerProfile?.defaultSplitBps || 0,
+                            programId: r.partnerProfile?.programId || '',
+                            trackingMethod: r.partnerProfile?.trackingMethod || 'MANUAL_APPROVAL',
+                            kpiTags: r.partnerProfile?.kpiTags || [],
+                        }
+                        : entityType === 'AGENCY'
+                            ? {
+                                type: 'AGENCY',
+                                payoutMode: r.agencyProfile?.payoutMode || 'MASTER_PAYEE',
+                                hasSubRecipients: Boolean(r.agencyProfile?.hasSubRecipients),
+                                acceptanceWindowDefault: r.agencyProfile?.acceptanceWindowDefault || 7,
+                                requiresMilestones: Boolean(r.agencyProfile?.requiresMilestones),
+                            }
+                            : {
+                                type: 'CONTRACTOR',
+                                engagementType: r.contractorProfile?.engagementType || 'FIXED',
+                                scopeSummary: r.contractorProfile?.scopeSummary || '',
+                                preferredPayoutAsset: r.contractorProfile?.preferredPayoutAsset || payout.preferredAsset || 'IDRX',
+                                kycLevel: r.contractorProfile?.kycLevel || 'BASIC',
+                                disputePreference: r.contractorProfile?.disputePreference || 'AUTO_ARBITRATION',
+                            };
+
+            const amountStr = String(resume.amount ?? '').split('.')[0];
+
+            const splitConfig = resume.splitConfig;
+            const splitRecipients =
+                Array.isArray(splitConfig) && splitConfig.length
+                    ? splitConfig.map((s: any, idx: number) => ({
+                        id: idx + 1,
+                        name: `Recipient ${idx + 1}`,
+                        address: s.recipient || '',
+                        percentage: (Number(s.bps || 0) / 100) || 0,
+                    }))
+                    : [{ id: 1, name: 'Primary Recipient', address: payout.payoutAddress || '', percentage: 100 }];
+
+            setPaymentData((prev) => ({
+                ...prev,
+                recipient: {
+                    identity: {
+                        displayName: r.displayName || prev.recipient.identity.displayName,
+                        legalName: r.legalName || '',
+                        entityType,
+                        email: r.billingEmail || prev.recipient.identity.email,
+                        country: r.country || prev.recipient.identity.country,
+                        timezone: r.timezone || prev.recipient.identity.timezone,
+                        referenceId: r.referenceId || '',
+                    },
+                    payout: {
+                        preferredAsset: payout.preferredAsset || resume.fundingAsset || prev.recipient.payout.preferredAsset,
+                        payoutMethod: payout.payoutMethod || prev.recipient.payout.payoutMethod,
+                        payoutAddress: payout.payoutAddress || prev.recipient.payout.payoutAddress,
+                        bankAccountRef: payout.bankAccountRef || '',
+                        settlementPreference: payout.settlementPreference || prev.recipient.payout.settlementPreference,
+                    },
+                    accounting: {
+                        counterpartyCode: accounting.counterpartyCode || '',
+                        costCenter: accounting.costCenter || '',
+                        tags: accounting.tags || [],
+                    },
+                    policy: {
+                        riskTier: policy.riskTier || prev.recipient.policy.riskTier,
+                        approvalPolicy: policy.approvalPolicy || prev.recipient.policy.approvalPolicy,
+                        maxSinglePayment: policy.maxSinglePayment ? String(policy.maxSinglePayment).split('.')[0] : '',
+                        maxMonthlyLimit: policy.maxMonthlyLimit ? String(policy.maxMonthlyLimit).split('.')[0] : '',
+                        requiresEscrowDefault: policy.requiresEscrowDefault ?? prev.recipient.policy.requiresEscrowDefault,
+                        requiresMilestonesDefault: policy.requiresMilestonesDefault ?? prev.recipient.policy.requiresMilestonesDefault,
+                    },
+                    profile,
+                },
+                amount: {
+                    value: formatThousands(amountStr),
+                    fundingAsset: resume.fundingAsset || prev.amount.fundingAsset,
+                    payoutAsset: resume.payoutAsset || resume.fundingAsset || prev.amount.payoutAsset,
+                },
+                timing: {
+                    releaseCondition: resume.releaseCondition || prev.timing.releaseCondition,
+                    deadline: `${resume.deadlineDays || 7} Days`,
+                    enableYield: Boolean(resume.enableYield),
+                    enableProtection: Boolean(resume.enableProtection),
+                },
+                split: {
+                    enabled: Array.isArray(splitConfig) ? splitConfig.length > 1 : Boolean(prev.split.enabled),
+                    recipients: splitRecipients,
+                },
+                milestones: {
+                    items: Array.isArray(resume.milestoneTemplate) ? resume.milestoneTemplate : prev.milestones.items,
+                },
+                notes: resume.notes || '',
+            }));
+
+            if (resume.recipientId) setRecipientId(String(resume.recipientId));
+            if (resume.id) setEscrowIntentId(String(resume.id));
+            setCurrentStep(5);
+            toast.message('Resumed draft payment. Review and confirm to create on-chain intent.');
+        } catch {
+            // ignore bad resume payloads
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const applyEntityDefaults = (entityType: EntityType) => {
         setPaymentData(prev => {
             const defaults = ENTITY_DEFAULTS[entityType];
@@ -292,7 +427,7 @@ export const CreatePayment: React.FC = () => {
             if (prev.split.recipients[0].address) return prev;
             const updated = [...prev.split.recipients];
             updated[0] = { ...updated[0], address: prev.recipient.payout.payoutAddress };
-            return { ...prev, split: { recipients: updated } };
+            return { ...prev, split: { ...prev.split, recipients: updated } };
         });
     }, [paymentData.recipient.payout.payoutAddress]);
 
@@ -459,22 +594,25 @@ export const CreatePayment: React.FC = () => {
             });
             if (!recipientId) setRecipientId(createdRecipientId);
 
-            const createdIntent = await createEscrowIntent({
-                recipientId: createdRecipientId,
-                entityType: paymentData.recipient.identity.entityType,
-                amount: paymentData.amount.value.replace(/\./g, ''),
-                fundingAsset: paymentData.amount.fundingAsset,
-                payoutAsset: paymentData.amount.payoutAsset,
-                releaseCondition: paymentData.timing.releaseCondition,
-                deadlineDays: days,
-                acceptanceWindowDays: days,
-                enableYield: paymentData.timing.enableYield,
-                enableProtection: paymentData.timing.enableProtection,
-                splitConfig: splitBps,
-                milestoneTemplate: paymentData.milestones.items,
-                notes: paymentData.notes,
-            });
-            setEscrowIntentId(createdIntent.id);
+            const intentIdToUse =
+                escrowIntentId ||
+                (await createEscrowIntent({
+                    recipientId: createdRecipientId,
+                    entityType: paymentData.recipient.identity.entityType,
+                    amount: paymentData.amount.value.replace(/\./g, ''),
+                    fundingAsset: paymentData.amount.fundingAsset,
+                    payoutAsset: paymentData.amount.payoutAsset,
+                    releaseCondition: paymentData.timing.releaseCondition,
+                    deadlineDays: days,
+                    acceptanceWindowDays: days,
+                    enableYield: paymentData.timing.enableYield,
+                    enableProtection: paymentData.timing.enableProtection,
+                    splitConfig: splitBps,
+                    milestoneTemplate: paymentData.milestones.items,
+                    notes: paymentData.notes,
+                })).id;
+
+            if (!escrowIntentId) setEscrowIntentId(intentIdToUse);
         } catch (error) {
             toast.error('Failed to save recipient or escrow metadata.');
             return;
@@ -536,7 +674,7 @@ export const CreatePayment: React.FC = () => {
                         topics: log.topics,
                     });
                     if (decoded.eventName === 'IntentCreated') {
-                        onchainIntentId = decoded.args.intentId as bigint;
+                        onchainIntentId = (decoded as any).args?.intentId as bigint;
                         break;
                     }
                 } catch {

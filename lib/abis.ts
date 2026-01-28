@@ -14,6 +14,9 @@ import YieldManagerV2ABI from '../abis/YieldManagerV2.abi.json';
 import ThetanutsVaultStrategyV2ABI from '../abis/ThetanutsVaultStrategyV2.abi.json';
 import BaseVaultUpgradeableABI from '../abis/BaseVaultUpgradeable.abi.json';
 import MockStrategyAaveV3_IDRX_WETHAbi from '../YieldModeABI/MockStrategyAaveV3_IDRX_WETH.abi.json';
+import StrategySelfReportedYieldOracleAbi from '../YieldModeABI/StrategySelfReportedYieldOracle.abi.json';
+import YieldModeIdrxAbi from '../YieldModeABI/IDRX.abi.json';
+import YieldModeFaucetAbi from '../YieldModeABI/GigPayFaucet.abi.json';
 import { BASE_SEPOLIA_CHAIN_ID, CONTRACTS_BY_CHAIN } from './contracts';
 
 export {
@@ -24,7 +27,10 @@ export {
     YieldManagerV2ABI,
     ThetanutsVaultStrategyV2ABI,
     BaseVaultUpgradeableABI,
-    MockStrategyAaveV3_IDRX_WETHAbi as StrategyABI // Export generic Strategy ABI
+    MockStrategyAaveV3_IDRX_WETHAbi as StrategyABI, // Export generic Strategy ABI
+    StrategySelfReportedYieldOracleAbi as YieldOracleABI,
+    YieldModeIdrxAbi as YieldModeIDRXABI,
+    YieldModeFaucetAbi as YieldModeFaucetABI,
 };
 
 type NetworkConfig = {
@@ -90,6 +96,7 @@ const ABI_MAP: Record<string, unknown> = {
     YieldManagerV2: YieldManagerV2ABI,
     ThetanutsVaultStrategyV2: ThetanutsVaultStrategyV2ABI,
     GigPayFaucet: GigPayFaucetAbi,
+    YieldOracle: StrategySelfReportedYieldOracleAbi,
     MockIDRX: MockIDRXAbi,
     MockUSDC: MockUSDCAbi,
     MockUSDT: MockUSDTAbi,

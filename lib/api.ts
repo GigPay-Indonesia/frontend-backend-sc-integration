@@ -87,3 +87,47 @@ export const getEscrowIntents = async (filters?: { status?: string; entityType?:
     const path = query ? `/escrows/intents?${query}` : '/escrows/intents';
     return request<{ intents: any[] }>(path, { method: 'GET' });
 };
+
+// --- Treasury Ops (hybrid backend endpoints) ---
+export const getTreasuryOverview = async () => {
+    return request<{
+        chainId: number;
+        treasury: string;
+        totals: { idle: string; yieldDeployed: string; escrowLocked: string; total: string };
+        perAsset: Array<{
+            symbol: string;
+            tokenAddress: string;
+            idle: string;
+            yieldDeployed: string;
+            escrowLocked: string;
+            total: string;
+        }>;
+        byStatus: Array<{ status: string; _count: { _all: number } }>;
+        snapshots: any[];
+        recentEvents: any[];
+    }>('/treasury/overview', { method: 'GET' });
+};
+
+export const getTreasuryHistory = async (range: '7d' | '30d' | '90d' | '1y' | 'all' = '30d') => {
+    const params = new URLSearchParams({ range });
+    return request<{ range: string; rows: any[] }>(`/treasury/history?${params.toString()}`, { method: 'GET' });
+};
+
+export const getTreasuryActivity = async (opts?: { limit?: number; source?: string }) => {
+    const params = new URLSearchParams();
+    if (opts?.limit != null) params.set('limit', String(opts.limit));
+    if (opts?.source) params.set('source', opts.source);
+    const q = params.toString();
+    return request<{ rows: any[] }>(q ? `/treasury/activity?${q}` : '/treasury/activity', { method: 'GET' });
+};
+
+export const getPaymentIntents = async (opts?: { status?: string }) => {
+    const params = new URLSearchParams();
+    if (opts?.status) params.set('status', opts.status);
+    const q = params.toString();
+    return request<{ intents: any[] }>(q ? `/payments/intents?${q}` : '/payments/intents', { method: 'GET' });
+};
+
+export const getPaymentIntentHistory = async (onchainIntentId: string) => {
+    return request<{ rows: any[] }>(`/payments/intents/${onchainIntentId}/history`, { method: 'GET' });
+};

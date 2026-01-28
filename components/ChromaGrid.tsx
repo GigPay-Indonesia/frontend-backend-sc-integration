@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 
 export interface ChromaItem {
@@ -19,6 +19,9 @@ export interface ChromaGridProps {
     damping?: number;
     fadeOut?: number;
     ease?: string;
+    marqueeSeconds?: number;
+    gapPx?: number;
+    pauseOnHover?: boolean;
 }
 
 type SetterFn = (v: number | string) => void;
@@ -29,13 +32,17 @@ const ChromaGrid: React.FC<ChromaGridProps> = ({
     radius = 300,
     damping = 0.45,
     fadeOut = 0.6,
-    ease = 'power3.out'
+    ease = 'power3.out',
+    marqueeSeconds = 42,
+    gapPx = 24,
+    pauseOnHover = true
 }) => {
     const rootRef = useRef<HTMLDivElement>(null);
     const fadeRef = useRef<HTMLDivElement>(null);
     const setX = useRef<SetterFn | null>(null);
     const setY = useRef<SetterFn | null>(null);
     const pos = useRef({ x: 0, y: 0 });
+    const [paused, setPaused] = useState(false);
 
     const demo: ChromaItem[] = [
         {
@@ -59,6 +66,16 @@ const ChromaGrid: React.FC<ChromaGridProps> = ({
     ];
 
     const data = items?.length ? items : demo;
+
+    const trackStyle = useMemo(
+        () =>
+            ({
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                ['--marquee-duration' as any]: `${marqueeSeconds}s`,
+                ['--marquee-gap' as any]: `${gapPx}px`
+            }) as React.CSSProperties,
+        [gapPx, marqueeSeconds]
+    );
 
     useEffect(() => {
         const el = rootRef.current;
@@ -125,31 +142,53 @@ const ChromaGrid: React.FC<ChromaGridProps> = ({
             }
         >
             <style>{`
-          @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
+          @keyframes chroma-marquee {
+            0%   { transform: translate3d(0, 0, 0); }
+            /* Move exactly one group width + one gap for seamless loop */
+            100% { transform: translate3d(calc(-50% - (var(--marquee-gap) / 2)), 0, 0); }
           }
-          .animate-marquee {
-            animation: marquee 40s linear infinite;
+          .chroma-marquee-track {
+            display: flex;
+            width: max-content;
+            will-change: transform;
+            animation: chroma-marquee var(--marquee-duration) linear infinite;
           }
-          .animate-marquee:hover {
+          .chroma-marquee-group {
+            display: flex;
+            gap: var(--marquee-gap);
+            padding-right: var(--marquee-gap);
+            flex-shrink: 0;
+          }
+          .chroma-marquee-paused {
             animation-play-state: paused;
+          }
+          .chroma-edge-fade {
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
           }
         `}</style>
 
             {/* Marquee Container */}
-            <div className="flex w-max animate-marquee">
-                {/* Set 1 */}
-                <div className="flex gap-6 pr-6 shrink-0">
-                    {data.map((c, i) => (
-                        <Card key={`set1-${i}`} c={c} handleCardMove={handleCardMove} handleCardClick={handleCardClick} />
-                    ))}
-                </div>
-                {/* Set 2 */}
-                <div className="flex gap-6 pr-6 shrink-0">
-                    {data.map((c, i) => (
-                        <Card key={`set2-${i}`} c={c} handleCardMove={handleCardMove} handleCardClick={handleCardClick} />
-                    ))}
+            <div
+                className="w-full chroma-edge-fade"
+                style={trackStyle}
+                onMouseEnter={() => pauseOnHover && setPaused(true)}
+                onMouseLeave={() => pauseOnHover && setPaused(false)}
+                onPointerDown={() => setPaused(true)}
+                onPointerUp={() => setPaused(false)}
+                onPointerCancel={() => setPaused(false)}
+            >
+                <div className={`chroma-marquee-track ${paused ? 'chroma-marquee-paused' : ''}`}>
+                    <div className="chroma-marquee-group">
+                        {data.map((c, i) => (
+                            <Card key={`set1-${i}`} c={c} handleCardMove={handleCardMove} handleCardClick={handleCardClick} />
+                        ))}
+                    </div>
+                    <div className="chroma-marquee-group" aria-hidden="true">
+                        {data.map((c, i) => (
+                            <Card key={`set2-${i}`} c={c} handleCardMove={handleCardMove} handleCardClick={handleCardClick} />
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

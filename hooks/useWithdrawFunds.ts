@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt, useAccount, useBalance } from 'wagmi';
-import { parseUnits, formatUnits } from 'viem';
+import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
+import { parseUnits } from 'viem';
 import { getTokenAddress, BaseVaultUpgradeableABI } from '../lib/abis';
 import { getContractAddress } from '../lib/abis';
 import { useYieldData } from './useYieldData';
 
 export const useWithdrawFunds = () => {
     const { address: userAddress } = useAccount();
-    const { writeContract, data: hash, isPending: isWritePending, error: writeError } = useWriteContract();
+    const { writeContractAsync, isPending: isWritePending, error: writeError, reset: resetWrite } = useWriteContract();
+    const [hash, setHash] = useState<`0x${string}` | undefined>(undefined);
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
         hash,
+        query: { enabled: !!hash },
     });
 
     const [amount, setAmount] = useState('');
@@ -32,13 +34,14 @@ export const useWithdrawFunds = () => {
 
         try {
             // @ts-ignore
-            writeContract({
+            const txHash = await writeContractAsync({
                 address: vaultAddress as `0x${string}`,
                 abi: BaseVaultUpgradeableABI as any,
                 functionName: 'withdraw',
                 args: [parseUnits(amount, decimals), userAddress, userAddress],
                 account: userAddress
             });
+            setHash(txHash as `0x${string}`);
         } catch (error) {
             console.error("Withdraw Failed:", error);
         }
@@ -47,12 +50,15 @@ export const useWithdrawFunds = () => {
     const handleMax = () => {
         // Set amount to the estimated Asset Value of their shares
         if (availableAssets) {
-            setAmount(availableAssets.toFixed(decimals)); // Ensure we don't exceed decimals
+            // Keep this user-friendly; contract parsing happens at 18 decimals anyway.
+            setAmount(availableAssets.toFixed(4));
         }
     };
 
     const reset = () => {
         setAmount('');
+        setHash(undefined);
+        resetWrite();
         setIsModalOpen(false);
     };
 

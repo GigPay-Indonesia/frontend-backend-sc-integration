@@ -19,6 +19,7 @@ import { Policies } from './pages/Policies';
 import { Activity } from './pages/Activity';
 import TreasuryPage from './app/dashboard/treasury/page';
 // import { Treasury } from './pages/Treasury';
+import { TreasuryOps } from './pages/TreasuryOps';
 import { Settings } from './pages/Settings';
 import { Providers } from './components/Providers';
 
@@ -78,6 +79,11 @@ const AppContent: React.FC = () => {
             <Route path="/treasury" element={
               <PageTransition>
                 <TreasuryPage />
+              </PageTransition>
+            } />
+            <Route path="/treasury/ops" element={
+              <PageTransition>
+                <TreasuryOps />
               </PageTransition>
             } />
             <Route path="/payments" element={<PageTransition><Payments /></PageTransition>} />

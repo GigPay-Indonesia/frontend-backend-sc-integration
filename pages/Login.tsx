@@ -6,18 +6,9 @@ import PixelBlast from '../components/PixelBlast';
 import BlurText from '../components/BlurText';
 import DecryptedText from '../components/DecryptedText';
 import { AtSign, Lock, Eye, EyeOff } from 'lucide-react';
-import { WalletSelector } from '../components/WalletSelector';
-import {
-    Wallet,
-    WalletDropdown,
-    WalletAdvancedAddressDetails,
-    WalletAdvancedTokenHoldings,
-    WalletAdvancedTransactionActions,
-    WalletAdvancedWalletActions,
-    WalletDropdownDisconnect
-} from '@coinbase/onchainkit/wallet';
-import { hasOnchainKit } from '../lib/onchainkit';
-import { useAccount, useConnect } from 'wagmi';
+import { UnifiedWallet } from '../components/wallet/UnifiedWallet';
+import { AccountAbstractionAuth } from '../components/wallet/AccountAbstractionAuth';
+import { useAccount } from 'wagmi';
 
 interface LoginProps {
     onConnectWallet: () => void;
@@ -26,7 +17,6 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ onConnectWallet }) => {
     const navigate = useNavigate();
     const { isConnected, address } = useAccount();
-    const { connectors, connect } = useConnect();
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -109,34 +99,21 @@ export const Login: React.FC<LoginProps> = ({ onConnectWallet }) => {
 
                         {/* OnchainKit Connect Wallet */}
                         <div className="space-y-3 mb-8">
-                            {hasOnchainKit ? (
-                                <Wallet className="w-full">
-                                    <WalletSelector />
-                                    <WalletDropdown>
-                                        <WalletAdvancedWalletActions />
-                                        <WalletAdvancedAddressDetails />
-                                        <WalletAdvancedTransactionActions />
-                                        <WalletAdvancedTokenHoldings />
-                                        <WalletDropdownDisconnect />
-                                    </WalletDropdown>
-                                </Wallet>
-                            ) : (
-                                <div className="w-full bg-[#111] border border-white/10 text-slate-400 font-medium py-3 rounded-xl flex items-center justify-center gap-3">
-                                    <span>Set VITE_ONCHAINKIT_API_KEY to enable wallet</span>
-                                </div>
-                            )}
-                        </div>
+                            <AccountAbstractionAuth />
 
-                        <button
-                            onClick={() => {
-                                const coinbaseConnector = connectors.find(c => c.id === 'coinbaseWalletSDK');
-                                if (coinbaseConnector) connect({ connector: coinbaseConnector });
-                            }}
-                            className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 font-bold text-md transition-all flex items-center justify-center gap-3 mb-8"
-                        >
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                            Log in with Google
-                        </button>
+                            <div className="flex items-center w-full gap-4 my-6">
+                                <div className="h-px bg-white/10 flex-1" />
+                                <span className="text-sm text-slate-500 font-medium">
+                                    or connect an existing wallet
+                                </span>
+                                <div className="h-px bg-white/10 flex-1" />
+                            </div>
+
+                            {/* Hide Coinbase connector here to avoid duplicating the AA button above */}
+                            <div className="w-full">
+                                <UnifiedWallet variant="login" hideCoinbaseInSelector />
+                            </div>
+                        </div>
 
                         <div className="relative mb-8">
                             <div className="absolute inset-0 flex items-center">

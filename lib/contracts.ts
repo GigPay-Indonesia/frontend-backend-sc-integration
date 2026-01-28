@@ -6,6 +6,8 @@ export const CONTRACTS_BY_CHAIN = {
         GigPayRegistry: '0x32F8dF36b1e373A9E4C6b733386509D4da535a72',
         GigPayEscrowCoreV2: '0xd09177C97978f5c970ad25294681F5A51685c214',
         CompanyTreasuryVault: '0xCFB357fae5e5034cCfA0649b711a2897e685D14a',
+        // YieldMode demo oracle (see YieldModeABI/manifest.json)
+        YieldOracle: '0x826bFa587332002f35fd0240285dEd6C134E95dB',
         TokenRegistry: '0x3Ded1e4958315Dbfa44ffE38B763De5b17690C57',
         SwapRouteRegistry: '0xa85D9Cf90E1b8614DEEc04A955a486D5E43c3297',
         CompositeSwapManager: '0x2b7ca209bca4E0e15140857dc6F13ca17B50F50d',

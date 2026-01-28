@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ChromaGrid from '../components/ChromaGrid';
@@ -6,6 +6,7 @@ import { IconTreasury, IconEscrow, IconIncentives, IconTrustless } from '../comp
 
 import PixelBlast from '../components/PixelBlast';
 import HeroPhone from '../components/landing/HeroPhone';
+import { useYieldData } from '../hooks/useYieldData';
 
 interface LandingProps {
   onConnect: () => void;
@@ -13,6 +14,17 @@ interface LandingProps {
 
 export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
   const navigate = useNavigate();
+
+  const { strategies, isLoading: isYieldLoading, isError: isYieldError } = useYieldData();
+
+  const apyRange = useMemo(() => {
+    const apys = (strategies || [])
+      .map((s: any) => (typeof s?.apy === 'number' ? s.apy : 0))
+      .filter((v: number) => Number.isFinite(v) && v > 0);
+
+    if (apys.length === 0) return null;
+    return { min: Math.min(...apys), max: Math.max(...apys) };
+  }, [strategies]);
 
 
   return (
@@ -93,6 +105,21 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
         .animate-reveal { animation: blurReveal 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
         .animate-reveal-delay { animation: blurReveal 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; opacity: 0; }
         .animate-fade-in-delay { animation: fadeIn 1s ease-out 0.5s forwards; opacity: 0; }
+
+        /* Yield Aggregator (visual) */
+        @keyframes rebalance {
+          0%, 100% { transform: scaleX(var(--from)); opacity: 0.75; }
+          50% { transform: scaleX(var(--to)); opacity: 1; }
+        }
+        .rebalance-bar { transform-origin: left; animation: rebalance 5.2s ease-in-out infinite; }
+        @keyframes token-orbit {
+          0% { transform: translate(0px, 0px); opacity: 0.8; }
+          25% { transform: translate(10px, -10px); opacity: 1; }
+          50% { transform: translate(18px, 6px); opacity: 0.9; }
+          75% { transform: translate(6px, 14px); opacity: 1; }
+          100% { transform: translate(0px, 0px); opacity: 0.8; }
+        }
+        .idrx-orbit { animation: token-orbit 3.6s ease-in-out infinite; }
       `}</style>
 
       {/* Dynamic Background */}
@@ -111,12 +138,14 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
           <div className="max-w-3xl space-y-10">
             <div className="space-y-6">
               <h1 className="font-display text-6xl md:text-8xl font-black tracking-tight text-white leading-[0.9] glow-text select-none">
-                <span className="block animate-reveal">Run your treasury</span>
-                <span className="block animate-reveal-delay bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 via-purple-400 to-pink-400 bg-[length:200%_auto] animate-gradient">like software.</span>
+                <span className="block animate-reveal">Future of Work</span>
+                <span className="block animate-reveal-delay bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 via-purple-400 to-pink-400 bg-[length:200%_auto] animate-gradient">
+                  Decentralized. Secure. Limitless.
+                </span>
               </h1>
-              <p className="max-w-md font-sans text-base text-gray-400 leading-relaxed font-light animate-fade-in-delay">
-                A programmable Treasury + Payments OS for businesses, platforms, and global teams. Fund once, pay many,
-                automate settlement, and keep idle capital productive.
+              <p className="max-w-xl font-sans text-base text-gray-400 leading-relaxed font-light animate-fade-in-delay">
+                GigPay is a programmable escrow + payouts layer for global teams and platforms. Create payment intents, fund once,
+                release on milestones, and keep capital productive with Yield Mode—fully auditable onchain.
               </p>
             </div>
 
@@ -128,6 +157,11 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
                 <span>Launch App</span>
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </button>
+              <div className="flex flex-wrap gap-2 text-[11px] text-gray-400">
+                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Escrow payment intents</span>
+                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Milestones & approvals</span>
+                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Yield Mode on idle funds</span>
+              </div>
             </div>
           </div>
 
@@ -142,8 +176,24 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
         {/* ENTITY SHOWCASE */}
         <section className="border-y border-white/5 py-16 bg-[#050505]/50">
           <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
+              <div className="space-y-2">
+                <span className="text-blue-400 font-mono text-xs uppercase tracking-wider">Live entities</span>
+                <h2 className="text-2xl md:text-3xl font-display font-medium text-white">
+                  Built for agencies, vendors, and creator networks
+                </h2>
+                <p className="text-gray-400 text-sm max-w-2xl">
+                  One treasury, many payouts. Create intents, approve milestones, and release globally—while idle IDRX can stay in Yield Mode.
+                </p>
+              </div>
+              <div className="text-[11px] text-gray-500 font-mono uppercase tracking-wider">
+                drag to explore • hover to pause
+              </div>
+            </div>
             <div className="h-[560px] w-full relative">
               <ChromaGrid
+                marqueeSeconds={46}
+                gapPx={24}
                 items={[
                   {
                     image: '/avatars/alex.png',
@@ -206,15 +256,15 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
                       <div className="w-12 h-12 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center mb-6 text-blue-400 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
                         <IconTreasury className="w-6 h-6" />
                       </div>
-                      <h3 className="text-2xl font-bold text-white mb-3 tracking-tight group-hover:text-blue-100 transition-colors">Programmable Treasury</h3>
+                      <h3 className="text-2xl font-bold text-white mb-3 tracking-tight group-hover:text-blue-100 transition-colors">Programmable Payouts</h3>
                       <p className="text-gray-400 leading-relaxed text-sm group-hover:text-gray-300 transition-colors">
-                        Your treasury is no longer a static balance. Funds automatically route between liquidity, payments,
-                        and low-risk strategies based on real operational needs.
+                        Model payouts as payment intents instead of one-off transfers. Fund once, pay many, and automate
+                        routing between liquid balance, escrow, and Yield Mode based on what’s pending vs payable.
                       </p>
                     </div>
                     <div className="hidden lg:block">
                       <div className="px-3 py-1 bg-white/5 border border-white/5 rounded text-[10px] font-mono text-gray-400 uppercase tracking-wider group-hover:bg-blue-500/10 group-hover:text-blue-300 transition-colors">
-                        Treasury
+                        Payouts
                       </div>
                     </div>
                   </div>
@@ -261,9 +311,9 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
                   <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center mb-6 text-emerald-400 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                     <IconEscrow className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-3 tracking-tight group-hover:text-emerald-100 transition-colors">Payment Intents</h3>
+                  <h3 className="text-xl font-bold text-white mb-3 tracking-tight group-hover:text-emerald-100 transition-colors">Escrow Intents</h3>
                   <p className="text-sm text-gray-400 leading-relaxed mb-8 group-hover:text-gray-300">
-                    Active “Yield Mode” keeps capital productive during waiting periods. Verifiable lifecycle: Created → Funded → Released.
+                    Create → fund → release. Define milestones and approvals so payouts only settle when conditions are met—without losing an auditable trail.
                   </p>
                   <div className="mt-auto relative w-full h-28 flex flex-col justify-end items-center">
                     <div className="absolute w-[85%] h-10 bg-white/5 border border-white/5 rounded-t-md top-6 scale-90 opacity-40"></div>
@@ -291,11 +341,74 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
                     <div className="w-12 h-12 bg-pink-500/10 border border-pink-500/20 rounded-xl flex items-center justify-center mb-6 text-pink-400 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(236,72,153,0.2)]">
                       <IconIncentives className="w-6 h-6" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight group-hover:text-pink-100">Aligned Incentives</h3>
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight group-hover:text-pink-100">Yield Mode While Waiting</h3>
                     <p className="text-gray-400 leading-relaxed text-sm group-hover:text-gray-300">
-                      Delays and long approvals no longer waste capital. Funds can stay productive while stakeholders
-                      resolve reviews and disputes.
+                      Your escrow is backed by IDRX. While payouts are pending, GigPay routes idle IDRX into a Yield Aggregator that
+                      rebalances across strategies based on onchain quotes (estimated APY + risk).
                     </p>
+                    <div className="mt-4 text-[11px] text-gray-400">
+                      <span className="font-mono uppercase tracking-wider text-pink-300/90">Estimated APY</span>
+                      <span className="ml-2 font-semibold text-gray-200">
+                        {isYieldLoading
+                          ? 'Loading…'
+                          : apyRange
+                            ? `${apyRange.min.toFixed(2)}% – ${apyRange.max.toFixed(2)}%`
+                            : isYieldError
+                              ? 'Unavailable'
+                              : 'Variable'}
+                      </span>
+                      <span className="ml-2 text-gray-500">(demo quotes)</span>
+                    </div>
+                  </div>
+
+                  <div className="w-full md:w-[320px]">
+                    <div className="relative rounded-xl border border-white/10 bg-black/40 overflow-hidden">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(236,72,153,0.14),transparent_55%)] opacity-70"></div>
+                      <div className="relative p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+                              <img src="/idrx-logo.png" alt="IDRX" className="w-4 h-4 object-cover rounded-full idrx-orbit" />
+                            </div>
+                            <div>
+                              <div className="text-[11px] font-semibold text-white leading-none">IDRX Yield Aggregator</div>
+                              <div className="text-[10px] text-gray-500 font-mono uppercase tracking-wider">auto-rebalancing</div>
+                            </div>
+                          </div>
+                          <div className="text-[10px] font-mono text-pink-300/90 bg-pink-500/10 border border-pink-500/20 px-2 py-1 rounded">
+                            Yield Mode
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {[
+                            { name: 'Aave V3', color: 'bg-purple-400', from: 0.22, to: 0.46, delay: 0 },
+                            { name: 'Morpho', color: 'bg-blue-400', from: 0.34, to: 0.18, delay: 0.3 },
+                            { name: 'Pendle', color: 'bg-emerald-400', from: 0.18, to: 0.28, delay: 0.6 },
+                            { name: 'Curve', color: 'bg-amber-400', from: 0.26, to: 0.08, delay: 0.9 },
+                          ].map((row) => (
+                            <div key={row.name} className="flex items-center gap-3">
+                              <div className="w-16 text-[10px] text-gray-400 font-semibold truncate">{row.name}</div>
+                              <div className="flex-1 h-2 rounded-full bg-white/5 border border-white/10 overflow-hidden">
+                                <div
+                                  className={`h-full ${row.color} rebalance-bar`}
+                                  style={{
+                                    ['--from' as any]: row.from,
+                                    ['--to' as any]: row.to,
+                                    animationDelay: `${row.delay}s`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-gray-500">
+                          <span className="font-mono uppercase tracking-wider">rebalance</span>
+                          <span className="text-gray-400">scheduled + threshold</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -313,10 +426,10 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
                     <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center mb-6 text-indigo-400 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
                       <IconTrustless className="w-6 h-6" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight group-hover:text-indigo-100">Auditable by Design</h3>
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight group-hover:text-indigo-100">Audit-Ready by Default</h3>
                     <p className="text-gray-400 leading-relaxed text-sm group-hover:text-gray-300">
-                      Every action emits an onchain event. Every payment has a verifiable timeline — built for compliance,
-                      reconciliation, and reporting.
+                      Every action emits an onchain event. Every payment intent has a verifiable timeline—built for reconciliation,
+                      reporting, and compliance workflows.
                     </p>
                   </div>
                 </div>
@@ -332,11 +445,11 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
         <section id="how-it-works" className="py-24 px-6 md:px-12 lg:px-20 relative z-10 border-y border-white/5 bg-[#050505]/50">
           <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-16">
             <div className="flex-1 space-y-6">
-              <span className="text-blue-400 font-mono text-xs uppercase tracking-wider">The Engine</span>
-              <h2 className="text-3xl md:text-4xl font-display font-medium text-white">Capital Flow Engine</h2>
+              <span className="text-blue-400 font-mono text-xs uppercase tracking-wider">How it works</span>
+              <h2 className="text-3xl md:text-4xl font-display font-medium text-white">Intent → Escrow → Release</h2>
               <p className="text-gray-400 leading-relaxed">
-                Visualize and control how funds move through your organization. Programmable intents ensure
-                capital is always in the right state—whether liquid, in escrow, or earning yield—automatically.
+                Create a payment intent, fund it once, and release when conditions are met. GigPay keeps capital in the right state—liquid,
+                in escrow, or in Yield Mode—so payouts settle fast without sacrificing controls.
               </p>
             </div>
             <div className="relative w-full max-w-lg aspect-square lg:aspect-[4/3] flex items-center justify-center">
@@ -415,7 +528,7 @@ export const Landing: React.FC<LandingProps> = ({ onConnect }) => {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 blur-[100px] opacity-20"></div>
               <h2 className="text-4xl md:text-5xl font-semibold font-display mb-8 relative z-10">
-                Ready to run your <br /> treasury like software?
+                Ready to ship payouts <br /> with escrow and Yield Mode?
               </h2>
               <button
                 className="relative z-10 px-10 py-4 text-sm font-semibold rounded-full bg-white text-black hover:bg-gray-200 transition-all shadow-[0_0_15px_rgba(255,255,255,0.2)]"

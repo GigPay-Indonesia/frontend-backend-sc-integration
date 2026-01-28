@@ -3,7 +3,17 @@ import { useConnect } from 'wagmi';
 import { X, Wallet } from 'lucide-react';
 import { Button } from './Button';
 
-export const WalletSelector: React.FC = () => {
+type WalletSelectorProps = {
+    buttonLabel?: string;
+    buttonClassName?: string;
+    hideCoinbase?: boolean;
+};
+
+export const WalletSelector: React.FC<WalletSelectorProps> = ({
+    buttonLabel = 'Connect Web3',
+    buttonClassName = 'w-full flex items-center justify-center gap-2 p-3 rounded-xl font-medium',
+    hideCoinbase = false,
+}) => {
     const { connectors, connect } = useConnect();
     const [isOpen, setIsOpen] = useState(false);
 
@@ -17,16 +27,18 @@ export const WalletSelector: React.FC = () => {
             <Button
                 onClick={() => setIsOpen(true)}
                 variant="glow"
-                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl font-medium"
+                className={buttonClassName}
             >
                 <Wallet className="w-5 h-5" />
-                Connect Web3
+                {buttonLabel}
             </Button>
         );
     }
 
     // Filter connectors
-    const coinbaseConnector = connectors.find(c => c.id === 'coinbaseWalletSDK');
+    const coinbaseConnector = hideCoinbase
+        ? undefined
+        : connectors.find(c => c.id === 'coinbaseWalletSDK');
     const otherConnectors = connectors.filter(c => c.id !== 'coinbaseWalletSDK');
 
     return (
@@ -55,14 +67,14 @@ export const WalletSelector: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold text-white mb-8">GigPay ID</h3>
 
-                    {/* Primary Action: Sign Up (Coinbase Smart Wallet) */}
+                    {/* Primary Action: Smart Wallet (Account Abstraction) */}
                     {coinbaseConnector && (
                         <div className="w-full space-y-3 mb-6">
                             <button
                                 onClick={() => handleConnect(coinbaseConnector)}
                                 className="w-full bg-[#344bfd] hover:bg-[#2b3ed6] text-white rounded-2xl py-4 font-semibold text-lg transition-all flex items-center justify-between px-6 group"
                             >
-                                <span>Sign up</span>
+                                <span>Create Smart Wallet</span>
                                 <div className="bg-white rounded-full p-0.5">
                                     <div className="w-4 h-4 rounded-full bg-[#0052ff]" />
                                 </div>
@@ -73,7 +85,7 @@ export const WalletSelector: React.FC = () => {
                                 className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-2xl py-3 font-bold text-md transition-all flex items-center justify-center gap-3"
                             >
                                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                                Log in with Google
+                                Continue with Google (Smart Wallet)
                             </button>
                         </div>
                     )}
@@ -99,16 +111,28 @@ export const WalletSelector: React.FC = () => {
                         )}
 
                         {otherConnectors.map((connector) => (
+                            // Name tweaks for user clarity
+                            // - metaMask connector remains MetaMask
+                            // - injected connector represents "any other wallet" (Rabby, Brave, OKX, etc.)
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
                             <button
                                 key={connector.uid}
                                 onClick={() => handleConnect(connector)}
                                 className="w-full flex items-center justify-between p-4 rounded-xl bg-[#1e2329] hover:bg-[#2a3038] transition-all border border-transparent hover:border-white/10 group"
                             >
                                 <span className="font-semibold text-white">
-                                    {connector.name === 'MetaMask' ? 'MetaMask' : connector.name}
+                                    {connector.id === 'injected'
+                                        ? 'Browser Wallet'
+                                        : connector.name === 'MetaMask'
+                                            ? 'MetaMask'
+                                            : connector.name}
                                 </span>
                                 {connector.name === 'MetaMask' ? (
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" className="w-6 h-6" />
+                                ) : connector.id === 'injected' ? (
+                                    <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] font-bold text-white/80">
+                                        W
+                                    </div>
                                 ) : (
                                     <div className="w-6 h-6 rounded-full bg-slate-700" />
                                 )}

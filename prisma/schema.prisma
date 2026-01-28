@@ -331,3 +331,64 @@ model EscrowEventCursor {
   lastProcessedBlock BigInt
   updatedAt         DateTime @updatedAt
 }
+
+enum ChainEventSource {
+  TREASURY
+  ESCROW
+  YIELD_MANAGER
+  REGISTRY
+  SWAP
+  TOKEN
+}
+
+model ChainEvent {
+  id               String           @id @default(uuid())
+  chainId           Int
+  source            ChainEventSource
+  contractAddress   String
+  eventName         String
+  txHash            String
+  blockNumber       BigInt
+  logIndex          Int
+  onchainIntentId   BigInt?
+  asset             String?
+  amount            Decimal?        @db.Decimal(38, 18)
+  data              Json?
+  timestamp         DateTime?
+  createdAt         DateTime         @default(now())
+
+  @@unique([chainId, txHash, logIndex])
+  @@index([chainId, source, blockNumber])
+  @@index([onchainIntentId])
+}
+
+model TreasurySnapshot {
+  id            String    @id @default(uuid())
+  chainId        Int
+  treasury       String
+  assetSymbol    String?
+  idle           Decimal  @db.Decimal(38, 18)
+  escrowLocked   Decimal  @db.Decimal(38, 18)
+  yieldDeployed  Decimal  @db.Decimal(38, 18)
+  total          Decimal  @db.Decimal(38, 18)
+  blockNumber    BigInt?
+  timestamp      DateTime @default(now())
+
+  @@index([chainId, treasury, timestamp])
+}
+
+model EscrowIntentState {
+  id             String            @id @default(uuid())
+  chainId         Int
+  onchainIntentId BigInt           @unique
+  status          EscrowIntentStatus
+  treasury        String?
+  asset           String?
+  payoutAsset     String?
+  amount          Decimal?         @db.Decimal(38, 18)
+  escrowYieldEnabled Boolean?
+  escrowShares    Decimal?         @db.Decimal(38, 18)
+  updatedAt       DateTime         @updatedAt
+
+  @@index([chainId, status])
+}

@@ -4,7 +4,7 @@ import { Transaction, TransactionButton, TransactionStatus, TransactionStatusLab
 import { useAccount, useWriteContract } from 'wagmi';
 import { toast } from 'sonner';
 import { FAUCET_CONTRACT_ADDRESS, TOKENS, TokenType } from '../../lib/contracts';
-import { hasOnchainKit } from '../../lib/onchainkit';
+import { useWalletUiMode } from '../wallet/WalletUiModeContext';
 
 // Minimal ABI for requestTokens
 const FAUCET_ABI = [
@@ -26,6 +26,7 @@ const FAUCET_ABI = [
 export default function FaucetWidget() {
     const { address } = useAccount();
     const [selectedToken, setSelectedToken] = useState<TokenType>('IDRX');
+    const { walletUiMode } = useWalletUiMode();
 
     const calls = [
         {
@@ -125,7 +126,7 @@ export default function FaucetWidget() {
 
             {/* OnchainKit Transaction Button */}
             <div className="relative">
-                {hasOnchainKit && address ? (
+                {walletUiMode === 'onchainkit' && address ? (
                     <Transaction
                         calls={calls}
                         chainId={84532} // Base Sepolia
@@ -142,18 +143,10 @@ export default function FaucetWidget() {
                         </TransactionStatus>
                     </Transaction>
                 ) : address ? (
-                    // Fallback for when OnchainKit is missing but wallet is connected
-                    <button
-                        onClick={() => {
-                            // Basic toast for now, can implement standard writeContract later if needed
-                            // But usually if OnchainKit missing, we just want to show "Not available" 
-                            // unless we implement the full useWriteContract hook here.
-                            toast.error("Faucet requires OnchainKit (VITE_ONCHAINKIT_API_KEY)");
-                        }}
-                        className="w-full py-3 bg-slate-800 text-slate-400 font-medium rounded-lg text-center border border-slate-700 select-none cursor-not-allowed"
-                    >
-                        Faucet Unavailable (Missing API Key)
-                    </button>
+                    <FaucetFallbackButton
+                        selectedToken={selectedToken}
+                        contractAddress={FAUCET_CONTRACT_ADDRESS as `0x${string}`}
+                    />
                 ) : (
                     <div className="w-full py-3 bg-slate-800 text-slate-400 font-medium rounded-lg text-center border border-slate-700 select-none">
                         Connect Wallet to Claim
