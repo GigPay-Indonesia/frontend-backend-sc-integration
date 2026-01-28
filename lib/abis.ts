@@ -12,6 +12,8 @@ import SwapRouteRegistryAbi from '../abis/SwapRouteRegistry.abi.json';
 import TokenRegistryAbi from '../abis/TokenRegistry.abi.json';
 import YieldManagerV2ABI from '../abis/YieldManagerV2.abi.json';
 import ThetanutsVaultStrategyV2ABI from '../abis/ThetanutsVaultStrategyV2.abi.json';
+import BaseVaultUpgradeableABI from '../abis/BaseVaultUpgradeable.abi.json';
+import MockStrategyAaveV3_IDRX_WETHAbi from '../YieldModeABI/MockStrategyAaveV3_IDRX_WETH.abi.json';
 import { BASE_SEPOLIA_CHAIN_ID, CONTRACTS_BY_CHAIN } from './contracts';
 
 export {
@@ -20,7 +22,9 @@ export {
     CompanyTreasuryVaultAbi as CompanyTreasuryVaultABI,
     MockUSDCAbi as MockUSDCABI, // Export this
     YieldManagerV2ABI,
-    ThetanutsVaultStrategyV2ABI
+    ThetanutsVaultStrategyV2ABI,
+    BaseVaultUpgradeableABI,
+    MockStrategyAaveV3_IDRX_WETHAbi as StrategyABI // Export generic Strategy ABI
 };
 
 type NetworkConfig = {
