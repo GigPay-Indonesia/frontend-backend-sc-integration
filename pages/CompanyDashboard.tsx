@@ -313,24 +313,45 @@ const ActivityList = ({ activeTab, setActiveTab }: { activeTab: TabType, setActi
 
 // --- Main Component ---
 
+import { useYieldData } from '../hooks/useYieldData';
+
+// ... (keep Type Definitions imports) ...
+
+// ... (keep MobileHeader, FaucetCard, OverviewCarousel, ProfileSection, ActivityList) ...
+
+// --- Main Component ---
+
 const initialContracts: Contract[] = [
   { id: 'GP-101', title: 'Frontend React Development', freelancerName: 'Budi Santoso', amount: 15000000, state: ContractState.SUBMITTED, createdAt: '2023-10-25', isYielding: true },
   { id: 'GP-102', title: 'Logo Design & Brand Kit', freelancerName: 'Siti Aminah', amount: 5000000, state: ContractState.FUNDED, createdAt: '2023-10-27', isYielding: false },
   { id: 'GP-103', title: 'SEO Optimization', freelancerName: 'Pending', amount: 3500000, state: ContractState.CREATED, createdAt: '2023-10-28', isYielding: false },
 ];
 
-const initialTreasury: TreasuryStats = {
-  totalLiquidity: 250000000,
-  bufferAmount: 50000000,
-  investedAmount: 200000000,
-  currency: 'IDRX'
-};
-
 export const CompanyDashboard: React.FC = () => {
   const [contracts, setContracts] = useState<Contract[]>(initialContracts);
-  const [treasury] = useState<TreasuryStats>(initialTreasury);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('activity');
+
+  // Fetch Real Yield Data
+  const { totalAssets, strategies } = useYieldData();
+
+  // Calculate Real Treasury Stats
+  // Aggregating real debt from strategies for "Invested"
+  const realInvested = (strategies || []).reduce((acc: number, s: any) => acc + (s.debt || 0), 0);
+  // Buffer is Total - Invested (or just Liquid if we had that explicitly, here we assume diff)
+  // Logic: Total Assets (from Vault) - Strategies Debt = Liquid Buffer in Vault
+  // But useYieldData returns totalAssets which is Vault Balance (Liquid + Idle). 
+  // Wait, totalAssets in useYieldData is Vault.totalAssets() which includes Strategy Balances?
+  // Let's check useYieldData logic. totalAssets = vault.totalAssets().
+  // Usually Vault Total Assets = Liquid + Strategy Allocations.
+  // So Liquid = Total - Invested.
+
+  const treasury: TreasuryStats = {
+    totalLiquidity: totalAssets,
+    bufferAmount: Math.max(0, totalAssets - realInvested),
+    investedAmount: realInvested,
+    currency: 'IDRX'
+  };
 
   const getZone = (contract: Contract): YieldZone => {
     if (contract.state === ContractState.CREATED) return YieldZone.ZONE_1;
@@ -377,7 +398,7 @@ export const CompanyDashboard: React.FC = () => {
             Create Payment
           </button>
 
-          <OverviewCarousel treasuryBalance="215.35" />
+          <OverviewCarousel treasuryBalance={treasury.totalLiquidity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
 
           <div className="space-y-3">
             <div className="flex justify-between items-center px-1">
@@ -425,7 +446,7 @@ export const CompanyDashboard: React.FC = () => {
             </div>
             <div className="glass-card px-6 py-3 rounded-full flex items-center gap-3">
               <span className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Total Assets</span>
-              <span className="text-xl font-mono font-bold text-white">IDR {treasury.totalLiquidity.toLocaleString()}</span>
+              <span className="text-xl font-mono font-bold text-white">IDR {treasury.totalLiquidity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
 
@@ -439,7 +460,7 @@ export const CompanyDashboard: React.FC = () => {
                     <div className="w-2 h-2 bg-blue-400 rounded-full shadow-[0_0_8px_rgba(96,165,250,0.8)]"></div>
                     <h3 className="font-semibold text-slate-300 uppercase tracking-wide text-xs">Liquid Buffer (Zone 1)</h3>
                   </div>
-                  <p className="text-4xl font-bold font-display text-white mt-2">IDR {treasury.bufferAmount.toLocaleString()}</p>
+                  <p className="text-4xl font-bold font-display text-white mt-2">IDR {treasury.bufferAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 <div className="h-12 w-12 bg-white/5 rounded-full flex items-center justify-center text-blue-400 border border-white/10">
                   <Wallet size={24} />
@@ -460,7 +481,7 @@ export const CompanyDashboard: React.FC = () => {
                     <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
                     <h3 className="font-semibold text-slate-300 uppercase tracking-wide text-xs">Strategy Yield (Invested)</h3>
                   </div>
-                  <p className="text-4xl font-bold font-display text-white mt-2">IDR {treasury.investedAmount.toLocaleString()}</p>
+                  <p className="text-4xl font-bold font-display text-white mt-2">IDR {treasury.investedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 <div className="h-12 w-12 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-400 border border-emerald-500/20">
                   <TrendingUp size={24} />

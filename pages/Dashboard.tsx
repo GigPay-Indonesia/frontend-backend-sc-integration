@@ -4,6 +4,7 @@ import { ShieldCheck, LineChart, Building2, ArrowRight, Lock, Hourglass, CheckCi
 import { useAccount } from 'wagmi';
 import { FaucetWidget } from '../components/dashboard/FaucetWidget';
 import { useTreasuryData } from '../hooks/useTreasuryData';
+import { useYieldData } from '../hooks/useYieldData';
 
 // --- Tabbed Component Implementation ---
 type TabType = 'activity' | 'entities';
@@ -136,12 +137,17 @@ const ActivityEntitiesTabs = () => {
 export const Overview: React.FC = () => {
     const { address } = useAccount();
 
-    const { treasuryBalance, inYield, inEscrow } = useTreasuryData();
+    const { totalAssets, strategies } = useYieldData();
+
+    // Calculate Real Yield (Invested)
+    const realYield = (strategies || []).reduce((acc: number, s: any) => acc + (s.debt || 0), 0);
+
+    const formatIDRX = (val: number) => `IDRX ${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const dashboardData = {
-        treasuryBalance: treasuryBalance || '0.00',
-        inEscrow: inEscrow || '0.00',
-        inYield: inYield || '0.00',
+        treasuryBalance: totalAssets ? formatIDRX(totalAssets) : 'IDRX 0.00',
+        inEscrow: '0.00',
+        inYield: realYield ? formatIDRX(realYield) : 'IDRX 0.00',
         pendingActions: 3
     };
 

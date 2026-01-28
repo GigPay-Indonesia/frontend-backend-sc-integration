@@ -17,7 +17,8 @@ import { Entities } from './pages/Entities';
 import { Explore } from './pages/Explore';
 import { Policies } from './pages/Policies';
 import { Activity } from './pages/Activity';
-import { Treasury } from './pages/Treasury';
+import TreasuryPage from './app/dashboard/treasury/page';
+// import { Treasury } from './pages/Treasury';
 import { Settings } from './pages/Settings';
 import { Providers } from './components/Providers';
 
@@ -76,7 +77,7 @@ const AppContent: React.FC = () => {
             <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
             <Route path="/treasury" element={
               <PageTransition>
-                <Treasury />
+                <TreasuryPage />
               </PageTransition>
             } />
             <Route path="/payments" element={<PageTransition><Payments /></PageTransition>} />

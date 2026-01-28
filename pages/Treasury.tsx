@@ -1,5 +1,6 @@
 import React from 'react';
 import { TreasuryStats, TreasuryCharts, TreasuryActivity } from '../components/treasury/TreasuryComponents';
+import StrategyPortfolio from '../components/treasury/StrategyPortfolio';
 import { ArrowUpRight, TrendingUp, X, Loader2, CheckCircle } from 'lucide-react';
 
 import { useTreasuryData } from '../hooks/useTreasuryData';
@@ -258,6 +259,11 @@ export const Treasury: React.FC = () => {
 
                 {/* Charts Section */}
                 <TreasuryCharts allocationData={allocationData} />
+
+                {/* Strategy Portfolio Section */}
+                <div className="mb-8">
+                    <StrategyPortfolio />
+                </div>
 
                 {/* Lower Section: Breakdown & Activity */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

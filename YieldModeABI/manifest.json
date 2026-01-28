@@ -1,0 +1,81 @@
+{
+  "blockscout_api": "https://base-sepolia.blockscout.com/api",
+  "contracts": {
+    "Faucet": {
+      "abi": "GigPayFaucet.abi.json",
+      "address": "0x31d563850441a218F742237aF505fb7Fc4198bc7",
+      "source": "blockscout"
+    },
+    "IDRX": {
+      "abi": "IDRX.abi.json",
+      "address": "0x20Abd5644f1f77155c63A8818C75540F770ae223",
+      "source": "blockscout"
+    },
+    "Strategies": [
+      {
+        "abi": "MockStrategyAaveV3_IDRX_WETH.abi.json",
+        "address": "0x69d8caA25f9708fBee51656e9d08F78c6EcB8db8",
+        "name": "MockStrategyAaveV3_IDRX_WETH"
+      },
+      {
+        "abi": "MockStrategyMorpho_IDRX_USDC.abi.json",
+        "address": "0xdfdD73aFeb38e5BF907ab9c4D2B003CB56634c80",
+        "name": "MockStrategyMorpho_IDRX_USDC"
+      },
+      {
+        "abi": "MockStrategyPendle_IDRX_WETH.abi.json",
+        "address": "0x2C9121FdB898F6c969ACb7d937fea6e087777FC9",
+        "name": "MockStrategyPendle_IDRX_WETH"
+      },
+      {
+        "abi": "MockStrategyCurve_IDRX_USDT.abi.json",
+        "address": "0x9Ab63B991Dc8B245345B6755d2C3173D114501d8",
+        "name": "MockStrategyCurve_IDRX_USDT"
+      },
+      {
+        "abi": "MockStrategyUniswapV3_IDRX_WETH.abi.json",
+        "address": "0x0411b05c2B736e6E2E2237F6161f1a41E32dE4cf",
+        "name": "MockStrategyUniswapV3_IDRX_WETH"
+      },
+      {
+        "abi": "MockStrategyBalancer_IDRX_WETH.abi.json",
+        "address": "0x17A9DBDfC5442fBee43d71595a3242a76F6D289c",
+        "name": "MockStrategyBalancer_IDRX_WETH"
+      },
+      {
+        "abi": "MockStrategyCompound_IDRX_USDC.abi.json",
+        "address": "0x918ddc8a52F39de5eAd118F1Dc9c1BdB6db3E2a1",
+        "name": "MockStrategyCompound_IDRX_USDC"
+      },
+      {
+        "abi": "MockStrategyEthena_IDRX_USDC.abi.json",
+        "address": "0xc0Fc7dd76848211Bd5AC45146228b733A758D5e9",
+        "name": "MockStrategyEthena_IDRX_USDC"
+      },
+      {
+        "abi": "MockStrategyLido_IDRX_WETH.abi.json",
+        "address": "0x5cb1744b47BedE935d4EB7D5264D8788b7256fC7",
+        "name": "MockStrategyLido_IDRX_WETH"
+      },
+      {
+        "abi": "MockStrategyGMX_IDRX_WETH.abi.json",
+        "address": "0xD719f804691581938e45E0eAFf82c3c3b195f3cA",
+        "name": "MockStrategyGMX_IDRX_WETH"
+      }
+    ],
+    "VaultImplementation": {
+      "abi": "BaseVaultUpgradeable.abi.json",
+      "address": "0xEE3D9b2Aa9B91215C75Bfc29Cd006F626Cdcf574"
+    },
+    "VaultProxy": {
+      "abi": "BaseVaultUpgradeable.abi.json",
+      "address": "0xCFB357fae5e5034cCfA0649b711a2897e685D14a",
+      "note": "Proxy address; use BaseVaultUpgradeable ABI"
+    },
+    "YieldOracle": {
+      "abi": "StrategySelfReportedYieldOracle.abi.json",
+      "address": "0x826bFa587332002f35fd0240285dEd6C134E95dB"
+    }
+  },
+  "network": "base-sepolia"
+}
