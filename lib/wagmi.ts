@@ -1,6 +1,7 @@
-import { http, createConfig, createStorage } from 'wagmi';
+import { createConfig, createStorage } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
 import { coinbaseWallet, injected, metaMask } from 'wagmi/connectors';
+import { fallback, http } from 'viem';
 
 export const config = createConfig({
     // Option A: lock dApp to Base Sepolia to avoid cross-chain mismatch (TVL showing as 0).
@@ -25,6 +26,14 @@ export const config = createConfig({
         injected(),
     ],
     transports: {
-        [baseSepolia.id]: http(),
+        [baseSepolia.id]: fallback(
+            [
+                // Prefer explicit RPCs (more reliable than the default public endpoint).
+                import.meta.env.VITE_BASE_SEPOLIA_RPC_URL ? http(import.meta.env.VITE_BASE_SEPOLIA_RPC_URL) : null,
+                import.meta.env.VITE_BASE_SEPOLIA_RPC_URL_BACKUP ? http(import.meta.env.VITE_BASE_SEPOLIA_RPC_URL_BACKUP) : null,
+                // Final fallback: wagmi/viem default chain RPCs (can be rate-limited/outage).
+                http(),
+            ].filter(Boolean) as any
+        ),
     },
 });

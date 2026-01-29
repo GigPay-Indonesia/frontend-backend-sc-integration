@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Droplets, ChevronDown, Check, AlertCircle } from 'lucide-react';
 import { Transaction, TransactionButton, TransactionStatus, TransactionStatusLabel, TransactionStatusAction } from '@coinbase/onchainkit/transaction';
-import { useAccount, useWriteContract } from 'wagmi';
+import { useAccount, useChainId, useSwitchChain, useWriteContract } from 'wagmi';
 import { toast } from 'sonner';
 import { FAUCET_CONTRACT_ADDRESS, TOKENS, TokenType } from '../../lib/contracts';
 import { useWalletUiMode } from '../wallet/WalletUiModeContext';
+import { baseSepolia } from 'wagmi/chains';
 
 // Minimal ABI for requestTokens
 const FAUCET_ABI = [
@@ -62,10 +63,19 @@ export default function FaucetWidget() {
 
     function FaucetFallbackButton({ selectedToken, contractAddress }: { selectedToken: TokenType, contractAddress: `0x${string}` }) {
         const { writeContract, isPending } = useWriteContract();
+        const chainId = useChainId();
+        const { switchChainAsync, isPending: isSwitching } = useSwitchChain();
+        const isOnBaseSepolia = chainId === baseSepolia.id;
 
         return (
             <button
                 onClick={() => {
+                    if (!isOnBaseSepolia) {
+                        switchChainAsync({ chainId: baseSepolia.id })
+                            .then(() => toast.message('Switched to Base Sepolia. Click again to claim.'))
+                            .catch((err: any) => toast.error(err?.shortMessage || err?.message || 'Failed to switch network'));
+                        return;
+                    }
                     writeContract({
                         address: contractAddress,
                         abi: FAUCET_ABI,
@@ -76,10 +86,10 @@ export default function FaucetWidget() {
                         onError: (err) => toast.error(err.message.split('.')[0])
                     });
                 }}
-                disabled={isPending}
+                disabled={isPending || isSwitching}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
             >
-                {isPending ? 'Claiming...' : `Claim ${selectedToken}`}
+                {!isOnBaseSepolia ? 'Switch to Base Sepolia' : isPending ? 'Claiming...' : `Claim ${selectedToken}`}
             </button>
         );
     }
