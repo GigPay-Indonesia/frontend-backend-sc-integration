@@ -86,11 +86,11 @@ export const TreasuryOps: React.FC = () => {
     current:
       mode === 'fallback'
         ? {
-            idle: toNum(fallbackTotals.totals.idle),
-            yieldDeployed: toNum(fallbackTotals.totals.yieldDeployed),
-            escrowLocked: toNum(fallbackTotals.totals.escrowLocked),
-            total: toNum(fallbackTotals.totals.total),
-          }
+          idle: toNum(fallbackTotals.totals.idle),
+          yieldDeployed: toNum(fallbackTotals.totals.yieldDeployed),
+          escrowLocked: toNum(fallbackTotals.totals.escrowLocked),
+          total: toNum(fallbackTotals.totals.total),
+        }
         : null,
   });
 
@@ -211,362 +211,373 @@ export const TreasuryOps: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold font-display">Treasury Ops</h1>
-          <p className="text-slate-400 mt-2">
-            Allocation (idle / yield / escrow), history snapshots, and backend-indexed activity.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#050505] pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Blobs */}
+      <div className="pointer-events-none absolute -top-32 -left-20 h-72 w-72 rounded-full bg-blue-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute top-40 -right-24 h-80 w-80 rounded-full bg-purple-500/10 blur-[140px]" />
 
-        <div className="flex items-center gap-2">
-          {(['7d', '30d', '90d', '1y', 'all'] as const).map((r) => (
-            <Button
-              key={r}
-              variant={r === range ? 'default' : 'outline'}
-              className="h-9 px-3"
-              onClick={() => setRange(r)}
-              disabled={loading}
-            >
-              {r.toUpperCase()}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {error && (
-        <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-200">
-          {error}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-        <GlassCard className="p-5">
-          <div className="text-sm text-slate-400 font-bold">Totals</div>
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Total</span>
-              <span className="font-bold">{fmt(mode === 'backend' ? overview?.totals?.total : fallbackTotals.totals.total)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Idle</span>
-              <span className="font-bold">{fmt(mode === 'backend' ? overview?.totals?.idle : fallbackTotals.totals.idle)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Yield</span>
-              <span className="font-bold">{fmt(mode === 'backend' ? overview?.totals?.yieldDeployed : fallbackTotals.totals.yieldDeployed)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Escrow</span>
-              <span className="font-bold">{fmt(mode === 'backend' ? overview?.totals?.escrowLocked : fallbackTotals.totals.escrowLocked)}</span>
-            </div>
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
+          <div>
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 font-display">
+              Treasury Ops
+            </h1>
+            <p className="text-slate-400 mt-2 text-lg">
+              Allocation (idle / yield / escrow), history snapshots, and backend-indexed activity.
+            </p>
           </div>
-        </GlassCard>
 
-        <GlassCard className="p-5 lg:col-span-1">
-          <div className="text-sm text-slate-400 font-bold">Allocation</div>
-          <div className="h-56 mt-3">
-            {allocationData.length ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={allocationData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={80}>
-                    {allocationData.map((_, idx) => (
-                      <Cell key={idx} fill={pieColors[idx % pieColors.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: any) => fmt(value)} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-slate-500">
-                {loading ? 'Loading…' : 'No allocation data yet.'}
-              </div>
-            )}
-          </div>
-        </GlassCard>
-
-        <GlassCard className="p-5 lg:col-span-1">
-          <div className="text-sm text-slate-400 font-bold">Per-asset</div>
-          <div className="mt-4 space-y-2">
-            {((mode === 'backend' ? overview?.perAsset : fallbackTotals.perAsset) || []).map((a: any) => (
-              <div key={a.symbol} className="flex items-center justify-between text-sm">
-                <div className="text-slate-300 font-bold">{a.symbol}</div>
-                <div className="text-slate-400">idle {fmt(a.idle)} · yield {fmt(a.yieldDeployed)} · escrow {fmt(a.escrowLocked)}</div>
-              </div>
+          <div className="flex items-center gap-2 bg-slate-900/50 p-1 rounded-xl border border-white/10 backdrop-blur-sm">
+            {(['7d', '30d', '90d', '1y', 'all'] as const).map((r) => (
+              <Button
+                key={r}
+                variant={r === range ? 'default' : 'ghost'}
+                className={`h-9 px-4 text-xs font-bold uppercase tracking-wider transition-all ${r === range
+                  ? 'bg-blue-600 shadow-lg shadow-blue-500/25 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`}
+                onClick={() => setRange(r)}
+                disabled={loading}
+              >
+                {r.toUpperCase()}
+              </Button>
             ))}
-            {!(mode === 'backend' ? overview?.perAsset?.length : fallbackTotals.perAsset?.length) && (
-              <div className="text-slate-500 text-sm">{loading ? 'Loading…' : 'No assets found.'}</div>
-            )}
           </div>
-        </GlassCard>
-      </div>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <GlassCard className="p-5">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-slate-400 font-bold">History (combined)</div>
+        {error && (
+          <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-200">
+            {error}
           </div>
-          <div className="h-80 mt-4">
-            {historyRows.length ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={historyRows}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="t" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                  <Tooltip formatter={(value: any) => fmt(value)} />
-                  <Legend />
-                  <Line type="monotone" dataKey="total" stroke="#e2e8f0" dot={false} strokeWidth={2} />
-                  <Line type="monotone" dataKey="idle" stroke="#60a5fa" dot={false} />
-                  <Line type="monotone" dataKey="yield" stroke="#34d399" dot={false} />
-                  <Line type="monotone" dataKey="escrow" stroke="#f59e0b" dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-slate-500">
-                {loading ? 'Loading…' : 'No snapshots yet (snapshot loop writes periodically).'}
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+          <GlassCard className="p-5">
+            <div className="text-sm text-slate-400 font-bold">Totals</div>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">Total</span>
+                <span className="font-bold">{fmt(mode === 'backend' ? overview?.totals?.total : fallbackTotals.totals.total)}</span>
               </div>
-            )}
-          </div>
-        </GlassCard>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">Idle</span>
+                <span className="font-bold">{fmt(mode === 'backend' ? overview?.totals?.idle : fallbackTotals.totals.idle)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">Yield</span>
+                <span className="font-bold">{fmt(mode === 'backend' ? overview?.totals?.yieldDeployed : fallbackTotals.totals.yieldDeployed)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">Escrow</span>
+                <span className="font-bold">{fmt(mode === 'backend' ? overview?.totals?.escrowLocked : fallbackTotals.totals.escrowLocked)}</span>
+              </div>
+            </div>
+          </GlassCard>
 
-        <GlassCard className="p-5">
-          <div className="text-sm text-slate-400 font-bold">Activity</div>
-          <div className="mt-4 space-y-3 max-h-[22rem] overflow-auto pr-1">
-            {activityRows.map((e: any) => {
-              const ui = e.ui || {};
-              const title = ui.title || `${e.source} · ${e.eventName}`;
-              const jobTitle = ui.job?.title;
-              const jobId = ui.job?.id;
-              const milestoneIndex = ui.milestone?.index;
-              const recipient = ui.recipient;
-              const intentId = e.onchainIntentId != null ? String(e.onchainIntentId) : null;
-              const amount = e.amount != null ? fmt(e.amount) : null;
-              const asset = typeof e.asset === 'string' ? e.asset : null;
-              return (
-                <div key={e.id} className={`rounded-xl border p-3 ${severityClass(ui.severity)}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="font-bold text-slate-200 text-sm">{title}</div>
-                    <div className="text-xs text-slate-500">{shortHash(e.txHash)}</div>
-                  </div>
+          <GlassCard className="p-5 lg:col-span-1">
+            <div className="text-sm text-slate-400 font-bold">Allocation</div>
+            <div className="h-56 mt-3">
+              {allocationData.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={allocationData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={80}>
+                      {allocationData.map((_, idx) => (
+                        <Cell key={idx} fill={pieColors[idx % pieColors.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any) => fmt(value)} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-500">
+                  {loading ? 'Loading…' : 'No allocation data yet.'}
+                </div>
+              )}
+            </div>
+          </GlassCard>
 
-                  <div className="mt-1 text-xs text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span>
-                      block {String(e.blockNumber)} · log {String(e.logIndex)}
-                    </span>
-                    {intentId ? (
-                      <>
-                        <span className="text-slate-600">·</span>
-                        <Link to={`/payments/${intentId}`} className="text-blue-400 hover:text-blue-300">
-                          intent {intentId}
-                        </Link>
-                      </>
-                    ) : null}
-                    {amount ? (
-                      <>
-                        <span className="text-slate-600">·</span>
-                        <span className="font-mono text-slate-300">
-                          {amount}
-                          {asset ? ` (${asset.slice(0, 6)}…${asset.slice(-4)})` : ''}
-                        </span>
-                      </>
-                    ) : null}
-                  </div>
+          <GlassCard className="p-5 lg:col-span-1">
+            <div className="text-sm text-slate-400 font-bold">Per-asset</div>
+            <div className="mt-4 space-y-2">
+              {((mode === 'backend' ? overview?.perAsset : fallbackTotals.perAsset) || []).map((a: any) => (
+                <div key={a.symbol} className="flex items-center justify-between text-sm">
+                  <div className="text-slate-300 font-bold">{a.symbol}</div>
+                  <div className="text-slate-400">idle {fmt(a.idle)} · yield {fmt(a.yieldDeployed)} · escrow {fmt(a.escrowLocked)}</div>
+                </div>
+              ))}
+              {!(mode === 'backend' ? overview?.perAsset?.length : fallbackTotals.perAsset?.length) && (
+                <div className="text-slate-500 text-sm">{loading ? 'Loading…' : 'No assets found.'}</div>
+              )}
+            </div>
+          </GlassCard>
+        </div>
 
-                  {(jobTitle || recipient) && (
-                    <div className="mt-2 text-xs text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
-                      {jobTitle && jobId ? (
-                        <>
-                          <Link to={`/explore/${jobId}`} className="text-slate-200 hover:text-white font-bold">
-                            {jobTitle}
-                          </Link>
-                          {milestoneIndex != null ? (
-                            <span className="text-slate-500">· milestone {String(milestoneIndex) + 1}</span>
-                          ) : null}
-                        </>
-                      ) : null}
-                      {recipient ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <GlassCard className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-slate-400 font-bold">History (combined)</div>
+            </div>
+            <div className="h-80 mt-4">
+              {historyRows.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={historyRows}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="t" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                    <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                    <Tooltip formatter={(value: any) => fmt(value)} />
+                    <Legend />
+                    <Line type="monotone" dataKey="total" stroke="#e2e8f0" dot={false} strokeWidth={2} />
+                    <Line type="monotone" dataKey="idle" stroke="#60a5fa" dot={false} />
+                    <Line type="monotone" dataKey="yield" stroke="#34d399" dot={false} />
+                    <Line type="monotone" dataKey="escrow" stroke="#f59e0b" dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-500">
+                  {loading ? 'Loading…' : 'No snapshots yet (snapshot loop writes periodically).'}
+                </div>
+              )}
+            </div>
+          </GlassCard>
+
+          <GlassCard className="p-5">
+            <div className="text-sm text-slate-400 font-bold">Activity</div>
+            <div className="mt-4 space-y-3 max-h-[22rem] overflow-auto pr-1">
+              {activityRows.map((e: any) => {
+                const ui = e.ui || {};
+                const title = ui.title || `${e.source} · ${e.eventName}`;
+                const jobTitle = ui.job?.title;
+                const jobId = ui.job?.id;
+                const milestoneIndex = ui.milestone?.index;
+                const recipient = ui.recipient;
+                const intentId = e.onchainIntentId != null ? String(e.onchainIntentId) : null;
+                const amount = e.amount != null ? fmt(e.amount) : null;
+                const asset = typeof e.asset === 'string' ? e.asset : null;
+                return (
+                  <div key={e.id} className={`rounded-xl border p-3 ${severityClass(ui.severity)}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="font-bold text-slate-200 text-sm">{title}</div>
+                      <div className="text-xs text-slate-500">{shortHash(e.txHash)}</div>
+                    </div>
+
+                    <div className="mt-1 text-xs text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span>
+                        block {String(e.blockNumber)} · log {String(e.logIndex)}
+                      </span>
+                      {intentId ? (
                         <>
                           <span className="text-slate-600">·</span>
-                          <span>recipient {recipient}</span>
+                          <Link to={`/payments/${intentId}`} className="text-blue-400 hover:text-blue-300">
+                            intent {intentId}
+                          </Link>
+                        </>
+                      ) : null}
+                      {amount ? (
+                        <>
+                          <span className="text-slate-600">·</span>
+                          <span className="font-mono text-slate-300">
+                            {amount}
+                            {asset ? ` (${asset.slice(0, 6)}…${asset.slice(-4)})` : ''}
+                          </span>
                         </>
                       ) : null}
                     </div>
-                  )}
-                </div>
-              );
-            })}
 
-            {!activityRows.length && (
-              <div className="text-slate-500 text-sm">
-                {loading || (mode === 'fallback' && fallbackActivity.isLoading) ? 'Loading…' : 'No activity found.'}
-              </div>
-            )}
-          </div>
-        </GlassCard>
-      </div>
-
-      <div className="mt-6">
-        <GlassCard className="p-5">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="text-sm text-slate-400 font-bold">Jobs in progress</div>
-              <div className="text-xs text-slate-500 mt-1">
-                {mode === 'backend' ? 'Your published jobs and milestone completion.' : 'Unavailable in fallback mode.'}
-              </div>
-            </div>
-            <Link to="/explore" className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider">
-              View explore
-            </Link>
-          </div>
-
-          {mode !== 'backend' ? (
-            <div className="mt-4 text-slate-500 text-sm">Switch to backend mode to see maker job progress.</div>
-          ) : !address ? (
-            <div className="mt-4 text-slate-500 text-sm">Connect your wallet to load your jobs.</div>
-          ) : jobs == null ? (
-            <div className="mt-4 text-slate-500 text-sm">{loading ? 'Loading…' : 'Loading jobs…'}</div>
-          ) : !jobsInProgress.length ? (
-            <div className="mt-4 text-slate-500 text-sm">No jobs found.</div>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {jobsInProgress.slice(0, 8).map(({ job, total, done }: any) => {
-                const pct = total ? Math.round((done / total) * 100) : 0;
-                const first = Array.isArray(job.milestones) ? job.milestones.find((m: any) => m?.escrowIntent?.onchainIntentId != null) : null;
-                const firstIntentId = first?.escrowIntent?.onchainIntentId != null ? String(first.escrowIntent.onchainIntentId) : null;
-                return (
-                  <div key={job.id} className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <Link to={`/explore/${job.id}`} className="font-bold text-slate-200 hover:text-white">
-                          {job.title}
-                        </Link>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {done}/{total} milestones completed · {pct}%
-                        </div>
+                    {(jobTitle || recipient) && (
+                      <div className="mt-2 text-xs text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        {jobTitle && jobId ? (
+                          <>
+                            <Link to={`/explore/${jobId}`} className="text-slate-200 hover:text-white font-bold">
+                              {jobTitle}
+                            </Link>
+                            {milestoneIndex != null ? (
+                              <span className="text-slate-500">· milestone {String(milestoneIndex) + 1}</span>
+                            ) : null}
+                          </>
+                        ) : null}
+                        {recipient ? (
+                          <>
+                            <span className="text-slate-600">·</span>
+                            <span>recipient {recipient}</span>
+                          </>
+                        ) : null}
                       </div>
-                      {firstIntentId ? (
-                        <Link
-                          to={`/payments/${firstIntentId}`}
-                          className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider"
-                        >
-                          Open
-                        </Link>
-                      ) : null}
-                    </div>
-                    <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
-                      <div className="h-full bg-blue-500/70" style={{ width: `${pct}%` }} />
-                    </div>
+                    )}
                   </div>
                 );
               })}
-            </div>
-          )}
-        </GlassCard>
-      </div>
 
-      <div className="mt-6">
-        <GlassCard className="p-5">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="text-sm text-slate-400 font-bold">Payments</div>
-              <div className="text-xs text-slate-500 mt-1">
-                {mode === 'backend'
-                  ? 'Resume incomplete intents or jump to on-chain payment details.'
-                  : 'Backend drafts unavailable in fallback. Showing recent on-chain intents.'}
+              {!activityRows.length && (
+                <div className="text-slate-500 text-sm">
+                  {loading || (mode === 'fallback' && fallbackActivity.isLoading) ? 'Loading…' : 'No activity found.'}
+                </div>
+              )}
+            </div>
+          </GlassCard>
+        </div>
+
+        <div className="mt-6">
+          <GlassCard className="p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-sm text-slate-400 font-bold">Jobs in progress</div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {mode === 'backend' ? 'Your published jobs and milestone completion.' : 'Unavailable in fallback mode.'}
+                </div>
               </div>
+              <Link to="/explore" className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider">
+                View explore
+              </Link>
             </div>
-            <Link to="/payments/new" className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider">
-              New payment
-            </Link>
-          </div>
 
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-slate-500 uppercase font-bold text-[10px] tracking-widest border-b border-white/5">
-                <tr>
-                  <th className="py-3 pr-4">Payment</th>
-                  <th className="py-3 pr-4">Recipient</th>
-                  <th className="py-3 pr-4">Amount</th>
-                  <th className="py-3 pr-4">Asset</th>
-                  <th className="py-3 pr-4">Status</th>
-                  <th className="py-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {((mode === 'backend' ? paymentIntents : null) || []).slice(0, 20).map((p: any) => {
-                  const hasOnchain = p.onchainIntentId != null;
-                  const label = hasOnchain ? `PI-${String(p.onchainIntentId)}` : `Draft-${String(p.id).slice(0, 8)}`;
-                  const amount = p.amount ?? '—';
-                  const asset = p.fundingAsset ?? '—';
-                  const recipient = p.recipient?.displayName ?? '—';
+            {mode !== 'backend' ? (
+              <div className="mt-4 text-slate-500 text-sm">Switch to backend mode to see maker job progress.</div>
+            ) : !address ? (
+              <div className="mt-4 text-slate-500 text-sm">Connect your wallet to load your jobs.</div>
+            ) : jobs == null ? (
+              <div className="mt-4 text-slate-500 text-sm">{loading ? 'Loading…' : 'Loading jobs…'}</div>
+            ) : !jobsInProgress.length ? (
+              <div className="mt-4 text-slate-500 text-sm">No jobs found.</div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {jobsInProgress.slice(0, 8).map(({ job, total, done }: any) => {
+                  const pct = total ? Math.round((done / total) * 100) : 0;
+                  const first = Array.isArray(job.milestones) ? job.milestones.find((m: any) => m?.escrowIntent?.onchainIntentId != null) : null;
+                  const firstIntentId = first?.escrowIntent?.onchainIntentId != null ? String(first.escrowIntent.onchainIntentId) : null;
                   return (
-                    <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 pr-4 font-bold text-slate-200">{label}</td>
-                      <td className="py-3 pr-4 text-slate-300">{recipient}</td>
-                      <td className="py-3 pr-4 font-mono text-slate-200">{String(amount)}</td>
-                      <td className="py-3 pr-4 text-slate-300">{asset}</td>
-                      <td className="py-3 pr-4 text-slate-300">{String(p.status || '—')}</td>
-                      <td className="py-3 text-right">
-                        {hasOnchain ? (
+                    <div key={job.id} className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <Link to={`/explore/${job.id}`} className="font-bold text-slate-200 hover:text-white">
+                            {job.title}
+                          </Link>
+                          <div className="mt-1 text-xs text-slate-500">
+                            {done}/{total} milestones completed · {pct}%
+                          </div>
+                        </div>
+                        {firstIntentId ? (
                           <Link
-                            to={`/payments/${String(p.onchainIntentId)}`}
+                            to={`/payments/${firstIntentId}`}
+                            className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider"
+                          >
+                            Open
+                          </Link>
+                        ) : null}
+                      </div>
+                      <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
+                        <div className="h-full bg-blue-500/70" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </GlassCard>
+        </div>
+
+        <div className="mt-6">
+          <GlassCard className="p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-sm text-slate-400 font-bold">Payments</div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {mode === 'backend'
+                    ? 'Resume incomplete intents or jump to on-chain payment details.'
+                    : 'Backend drafts unavailable in fallback. Showing recent on-chain intents.'}
+                </div>
+              </div>
+              <Link to="/payments/new" className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider">
+                New payment
+              </Link>
+            </div>
+
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-slate-500 uppercase font-bold text-[10px] tracking-widest border-b border-white/5">
+                  <tr>
+                    <th className="py-3 pr-4">Payment</th>
+                    <th className="py-3 pr-4">Recipient</th>
+                    <th className="py-3 pr-4">Amount</th>
+                    <th className="py-3 pr-4">Asset</th>
+                    <th className="py-3 pr-4">Status</th>
+                    <th className="py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {((mode === 'backend' ? paymentIntents : null) || []).slice(0, 20).map((p: any) => {
+                    const hasOnchain = p.onchainIntentId != null;
+                    const label = hasOnchain ? `PI-${String(p.onchainIntentId)}` : `Draft-${String(p.id).slice(0, 8)}`;
+                    const amount = p.amount ?? '—';
+                    const asset = p.fundingAsset ?? '—';
+                    const recipient = p.recipient?.displayName ?? '—';
+                    return (
+                      <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3 pr-4 font-bold text-slate-200">{label}</td>
+                        <td className="py-3 pr-4 text-slate-300">{recipient}</td>
+                        <td className="py-3 pr-4 font-mono text-slate-200">{String(amount)}</td>
+                        <td className="py-3 pr-4 text-slate-300">{asset}</td>
+                        <td className="py-3 pr-4 text-slate-300">{String(p.status || '—')}</td>
+                        <td className="py-3 text-right">
+                          {hasOnchain ? (
+                            <Link
+                              to={`/payments/${String(p.onchainIntentId)}`}
+                              className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider"
+                            >
+                              Continue
+                            </Link>
+                          ) : (
+                            <button
+                              className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider"
+                              onClick={() => navigate('/payments/new', { state: { resumeEscrowIntent: p } })}
+                            >
+                              Continue
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {mode === 'fallback' &&
+                    fallbackPayments.rows.map((p) => (
+                      <tr key={p.key} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3 pr-4 font-bold text-slate-200">{p.label}</td>
+                        <td className="py-3 pr-4 text-slate-300">{p.recipient}</td>
+                        <td className="py-3 pr-4 font-mono text-slate-200">{p.amount}</td>
+                        <td className="py-3 pr-4 text-slate-300">{p.asset}</td>
+                        <td className="py-3 pr-4 text-slate-300">{p.status}</td>
+                        <td className="py-3 text-right">
+                          <Link
+                            to={`/payments/${p.onchainIntentId}`}
                             className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider"
                           >
                             Continue
                           </Link>
-                        ) : (
-                          <button
-                            className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider"
-                            onClick={() => navigate('/payments/new', { state: { resumeEscrowIntent: p } })}
-                          >
-                            Continue
-                          </button>
-                        )}
+                        </td>
+                      </tr>
+                    ))}
+
+                  {mode === 'backend' && !paymentIntents?.length && (
+                    <tr>
+                      <td className="py-4 text-slate-500 text-sm" colSpan={6}>
+                        {loading ? 'Loading…' : 'No payment intents yet.'}
                       </td>
                     </tr>
-                  );
-                })}
+                  )}
 
-                {mode === 'fallback' &&
-                  fallbackPayments.rows.map((p) => (
-                    <tr key={p.key} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 pr-4 font-bold text-slate-200">{p.label}</td>
-                      <td className="py-3 pr-4 text-slate-300">{p.recipient}</td>
-                      <td className="py-3 pr-4 font-mono text-slate-200">{p.amount}</td>
-                      <td className="py-3 pr-4 text-slate-300">{p.asset}</td>
-                      <td className="py-3 pr-4 text-slate-300">{p.status}</td>
-                      <td className="py-3 text-right">
-                        <Link
-                          to={`/payments/${p.onchainIntentId}`}
-                          className="text-blue-400 hover:text-blue-300 text-xs font-bold uppercase tracking-wider"
-                        >
-                          Continue
-                        </Link>
+                  {mode === 'fallback' && !fallbackPayments.rows.length && (
+                    <tr>
+                      <td className="py-4 text-slate-500 text-sm" colSpan={6}>
+                        {loading || fallbackPayments.isLoading ? 'Loading…' : 'No on-chain intents found.'}
                       </td>
                     </tr>
-                  ))}
-
-                {mode === 'backend' && !paymentIntents?.length && (
-                  <tr>
-                    <td className="py-4 text-slate-500 text-sm" colSpan={6}>
-                      {loading ? 'Loading…' : 'No payment intents yet.'}
-                    </td>
-                  </tr>
-                )}
-
-                {mode === 'fallback' && !fallbackPayments.rows.length && (
-                  <tr>
-                    <td className="py-4 text-slate-500 text-sm" colSpan={6}>
-                      {loading || fallbackPayments.isLoading ? 'Loading…' : 'No on-chain intents found.'}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </GlassCard>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </GlassCard>
+        </div>
       </div>
     </div>
   );

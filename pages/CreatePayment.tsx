@@ -702,7 +702,7 @@ export const CreatePayment: React.FC = () => {
                         splitConfig: splitBps,
                         milestones: paymentData.milestones.items.map((m) => ({
                             title: m.title,
-                            dueDays: m.dueDays,
+                            dueDays: String(m.dueDays || ''),
                             percentage: Number(m.percentage) || 0,
                         })),
                         notes: paymentData.notes,

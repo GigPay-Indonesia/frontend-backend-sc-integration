@@ -192,7 +192,7 @@ export const jobCreateSchema = z.object({
             .array(
                 z.object({
                     title: z.string().min(1),
-                    dueDays: z.string().optional(),
+                    dueDays: z.union([z.string(), z.number()]).optional(),
                     percentage: z.number().min(0).max(100),
                 })
             )

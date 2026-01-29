@@ -476,30 +476,30 @@ export const PaymentDetail: React.FC = () => {
                                     {pendingAction === 'Submit' && isActionLoading ? 'Submitting...' : 'Submit Work'}
                                 </button>
                                 <div className="flex flex-col sm:flex-row gap-3">
-                                <button
-                                    onClick={handleFund}
-                                    disabled={isActionLoading || !intentId}
-                                    className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all"
-                                >
-                                    {pendingAction === 'Fund' && isActionLoading ? 'Processing...' : 'Fund Escrow'}
-                                </button>
-                                <button
-                                    onClick={handleRelease}
-                                    disabled={isActionLoading || !intentId}
-                                    className="flex-1 py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-xl transition-all"
-                                >
-                                    {pendingAction === 'Release' && isActionLoading ? 'Processing...' : intent?.swapRequired ? 'Release With Swap' : 'Approve Release'}
-                                </button>
-                                <button className="flex-1 py-3 bg-[#0f172a] border border-slate-700 hover:border-slate-500 text-white font-medium rounded-xl transition-all">
-                                    Request Clarification
-                                </button>
-                                <button
-                                    onClick={handleRefund}
-                                    disabled={isActionLoading || !intentId}
-                                    className="flex-1 py-3 bg-[#0f172a] border border-red-500/40 hover:border-red-500 text-red-300 font-medium rounded-xl transition-all"
-                                >
-                                    {pendingAction === 'Refund' && isActionLoading ? 'Processing...' : 'Initiate Refund'}
-                                </button>
+                                    <button
+                                        onClick={handleFund}
+                                        disabled={isActionLoading || !intentId}
+                                        className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all"
+                                    >
+                                        {pendingAction === 'Fund' && isActionLoading ? 'Processing...' : 'Fund Escrow'}
+                                    </button>
+                                    <button
+                                        onClick={handleRelease}
+                                        disabled={isActionLoading || !intentId}
+                                        className="flex-1 py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-xl transition-all"
+                                    >
+                                        {pendingAction === 'Release' && isActionLoading ? 'Processing...' : intent?.swapRequired ? 'Release With Swap' : 'Approve Release'}
+                                    </button>
+                                    <button className="flex-1 py-3 bg-[#0f172a] border border-slate-700 hover:border-slate-500 text-white font-medium rounded-xl transition-all">
+                                        Request Clarification
+                                    </button>
+                                    <button
+                                        onClick={handleRefund}
+                                        disabled={isActionLoading || !intentId}
+                                        className="flex-1 py-3 bg-[#0f172a] border border-red-500/40 hover:border-red-500 text-red-300 font-medium rounded-xl transition-all"
+                                    >
+                                        {pendingAction === 'Refund' && isActionLoading ? 'Processing...' : 'Initiate Refund'}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -541,6 +541,71 @@ export const PaymentDetail: React.FC = () => {
                                     <span className="text-white">{payoutSymbol}</span>
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="bg-[#0f172a]/40 border border-slate-800 rounded-2xl p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h4 className="text-white font-bold">Transaction Protection</h4>
+                                {intent?.protectionEnabled ? (
+                                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                        <ShieldCheck size={14} className="text-emerald-400" />
+                                        <span className="text-xs font-bold text-emerald-400">Active</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-800 border border-slate-700">
+                                        <ShieldCheck size={14} className="text-slate-500" />
+                                        <span className="text-xs font-bold text-slate-500">Inactive</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                                {intent?.protectionEnabled
+                                    ? "This payment is protected against non-delivery or disputes. You can claim protection if criteria are met."
+                                    : "Secure your funds against fraud or non-delivery by purchasing transaction protection."}
+                            </p>
+
+                            {intent?.protectionEnabled ? (
+                                <button
+                                    onClick={() => {
+                                        if (!intentId || !escrowCore.address) return;
+                                        setPendingAction('ClaimProtection');
+                                        writeContract({
+                                            address: escrowCore.address,
+                                            abi: escrowCore.abi as any,
+                                            functionName: 'settleAndClaimProtection',
+                                            args: [intentId],
+                                        });
+                                    }}
+                                    disabled={isActionLoading || !intentId}
+                                    className="w-full py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                                >
+                                    <ShieldCheck size={16} />
+                                    {pendingAction === 'ClaimProtection' && isActionLoading ? 'Processing...' : 'Claim Protection'}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        // Mock Quote Flow for Demo
+                                        const mockQuote = {
+                                            riskScore: 10,
+                                            premium: 0n, // Free for demo
+                                            coverage: intent?.amount || 0n,
+                                            expiry: BigInt(Math.floor(Date.now() / 1000) + 3600),
+                                            signature: "0x"
+                                        };
+
+                                        // Note: In a real app, we'd fetch this quote from an API. 
+                                        // Since we don't have the backend oracle running, we just show the intended UI flow.
+                                        alert("In a production environment, this would fetch a signed quote from the Risk Oracle and submit `buyProtectionFromQuote`.");
+                                    }}
+                                    disabled={isActionLoading || !intentId}
+                                    className="w-full py-2.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 hover:border-blue-500/40 text-blue-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                                >
+                                    <ShieldCheck size={16} />
+                                    Buy Protection
+                                </button>
+                            )}
                         </div>
 
                         <div className="bg-[#0f172a]/40 border border-slate-800 rounded-2xl p-6 flex gap-3">

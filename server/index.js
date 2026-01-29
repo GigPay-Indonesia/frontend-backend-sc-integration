@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { PrismaClient, Prisma } from '@prisma/client';
-import crypto from 'crypto';
+import { createRequire } from 'module';
+import { createPublicClient, http, parseAbiItem } from 'viem';
+import { baseSepolia } from 'viem/chains';
 import {
     escrowActionSchema,
     escrowIntentSchema,
@@ -14,16 +15,19 @@ import {
     recipientUpdateSchema,
     splitTemplateSchema,
 } from './validation.js';
-import { createPublicClient, http, parseAbiItem } from 'viem';
-import { baseSepolia } from 'viem/chains';
-import GigPayEscrowCoreV2Abi from '../abis/GigPayEscrowCoreV2.abi.json' assert { type: 'json' };
-import GigPayRegistryAbi from '../abis/GigPayRegistry.abi.json' assert { type: 'json' };
-import CompanyTreasuryVaultAbi from '../abis/CompanyTreasuryVault.abi.json' assert { type: 'json' };
-import ThetanutsVaultStrategyV2Abi from '../abis/ThetanutsVaultStrategyV2.abi.json' assert { type: 'json' };
+
+const require = createRequire(import.meta.url);
+const { PrismaClient, Prisma } = require('@prisma/client');
+const crypto = require('crypto');
+
+const GigPayEscrowCoreV2Abi = require('../abis/GigPayEscrowCoreV2.abi.json');
+const GigPayRegistryAbi = require('../abis/GigPayRegistry.abi.json');
+const CompanyTreasuryVaultAbi = require('../abis/CompanyTreasuryVault.abi.json');
+const ThetanutsVaultStrategyV2Abi = require('../abis/ThetanutsVaultStrategyV2.abi.json');
 
 const app = express();
 const prisma = new PrismaClient({
-    accelerateUrl: process.env.DATABASE_URL,
+    // accelerateUrl: process.env.DATABASE_URL, 
 });
 const PORT = process.env.PORT || 4000;
 const CHAIN_ID = Number(process.env.GIGPAY_CHAIN_ID || 84532);
@@ -478,14 +482,14 @@ app.get('/treasury/activity', async (req, res) => {
                     title: ctx.escrowJobMilestone.job.title,
                     createdBy: ctx.escrowJobMilestone.job.createdBy,
                     isPublic: ctx.escrowJobMilestone.job.isPublic,
-                  }
+                }
                 : null;
             const milestone = ctx?.escrowJobMilestone
                 ? {
                     index: ctx.escrowJobMilestone.index,
                     title: ctx.escrowJobMilestone.title,
                     percentage: ctx.escrowJobMilestone.percentage,
-                  }
+                }
                 : null;
 
             return {
@@ -1591,8 +1595,8 @@ const startEscrowEventSync = () => {
                     log.eventName === 'EscrowFunded' || log.eventName === 'RefundReceived' || log.eventName === 'TreasuryYieldDeposited'
                         ? toDecimal18(log.args?.amount) || null
                         : log.eventName === 'TreasuryYieldWithdrawn'
-                          ? toDecimal18(log.args?.assetsOut) || null
-                          : null;
+                            ? toDecimal18(log.args?.assetsOut) || null
+                            : null;
 
                 await upsertChainEvent({
                     source: 'TREASURY_VAULT',
