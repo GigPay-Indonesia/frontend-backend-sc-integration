@@ -28,7 +28,12 @@ const CompanyTreasuryVaultAbi = require('../abis/CompanyTreasuryVault.abi.json')
 const ThetanutsVaultStrategyV2Abi = require('../abis/ThetanutsVaultStrategyV2.abi.json');
 
 const app = express();
-const dbUrl = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
+// Prefer direct Postgres URLs in serverless (Vercel Postgres/Neon/Supabase).
+const dbUrl =
+    process.env.DIRECT_DATABASE_URL ||
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL;
 const prisma = (() => {
     // Prefer driver adapter for local Postgres to avoid binary engine networking issues in some environments (e.g. WSL).
     if (dbUrl && dbUrl.startsWith('postgresql://')) {
@@ -255,6 +260,15 @@ const safeDb = async (fn, fallbackValue) => {
         if (isMissingTableError(e)) return fallbackValue;
         throw e;
     }
+};
+
+const isDbOfflineError = (e) => {
+    const msg = `${String(e?.message || '')}\n${String(e || '')}`;
+    return (
+        msg.includes('ECONNREFUSED') ||
+        msg.includes("Can't reach database server") ||
+        msg.includes('P1001')
+    );
 };
 
 const computeTreasuryBreakdown = async (client) => {
@@ -726,6 +740,13 @@ app.post('/jobs', async (req, res) => {
             intents: result.created.map((x) => x.escrowIntent),
         });
     } catch (error) {
+        if (isDbOfflineError(error)) {
+            res.status(503).json({
+                error: 'Database is offline (Postgres not reachable).',
+                action: 'Start Postgres, then retry.',
+            });
+            return;
+        }
         if (isMissingTableError(error)) {
             res.status(503).json({
                 error: 'Jobs tables are not migrated in this database yet (missing `EscrowJob`).',
@@ -999,6 +1020,13 @@ app.post('/recipients', async (req, res) => {
 
         res.json({ recipient });
     } catch (error) {
+        if (isDbOfflineError(error)) {
+            res.status(503).json({
+                error: 'Database is offline (Postgres not reachable).',
+                action: 'Start Postgres (`sudo service postgresql start`), then retry.',
+            });
+            return;
+        }
         res.status(400).json({ error: error.message || 'Invalid payload' });
     }
 });
@@ -1743,7 +1771,14 @@ const startEscrowEventSync = () => {
     }, EVENT_POLL_INTERVAL_MS);
 };
 
-startEscrowEventSync();
+// On Vercel (serverless), background loops are unreliable. Keep them disabled by default.
+// Enable explicitly for long-running hosts via env flags.
+const ENABLE_INDEXER = process.env.GIGPAY_ENABLE_INDEXER === 'true';
+const ENABLE_SNAPSHOTS = process.env.GIGPAY_ENABLE_SNAPSHOTS === 'true';
+
+if (!process.env.VERCEL && ENABLE_INDEXER) {
+    startEscrowEventSync();
+}
 
 // Snapshot writer (hybrid): persists totals for charts (idle/escrow/yield/total).
 const startTreasurySnapshotLoop = () => {
@@ -1800,8 +1835,16 @@ const startTreasurySnapshotLoop = () => {
     setInterval(tick, intervalMs);
 };
 
-startTreasurySnapshotLoop();
+if (!process.env.VERCEL && ENABLE_SNAPSHOTS) {
+    startTreasurySnapshotLoop();
+}
 
-app.listen(PORT, () => {
-    console.log(`GigPay API listening on ${PORT}`);
-});
+// Export the app for serverless runtimes (Vercel).
+export default app;
+
+// Local/long-running start
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`GigPay API listening on ${PORT}`);
+    });
+}

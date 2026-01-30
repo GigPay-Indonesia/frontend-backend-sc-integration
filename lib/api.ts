@@ -1,7 +1,11 @@
-const API_URL = (import.meta.env as ImportMetaEnv & { VITE_API_URL?: string }).VITE_API_URL || 'http://localhost:4000';
+const VITE_API_URL = (import.meta.env as ImportMetaEnv & { VITE_API_URL?: string }).VITE_API_URL;
+// Dev: talk to local express server (port 4000).
+// Prod (Vercel): call serverless function under /api.
+const API_URL = VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000' : '');
+const API_PREFIX = import.meta.env.DEV ? '' : '/api';
 
 const request = async <T>(path: string, options: RequestInit): Promise<T> => {
-    const response = await fetch(`${API_URL}${path}`, {
+    const response = await fetch(`${API_URL}${API_PREFIX}${path}`, {
         headers: {
             'Content-Type': 'application/json',
             ...(options.headers || {}),
@@ -10,8 +14,20 @@ const request = async <T>(path: string, options: RequestInit): Promise<T> => {
     });
 
     if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || 'Request failed');
+        const text = await response.text();
+        try {
+            const json = JSON.parse(text);
+            const msg =
+                typeof json?.error === 'string'
+                    ? json.error
+                    : typeof json?.message === 'string'
+                      ? json.message
+                      : text;
+            const action = typeof json?.action === 'string' ? `\n${json.action}` : '';
+            throw new Error(`${msg}${action}`.trim() || 'Request failed');
+        } catch {
+            throw new Error(text || 'Request failed');
+        }
     }
 
     return response.json() as Promise<T>;
