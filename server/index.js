@@ -916,7 +916,18 @@ app.get('/jobs', async (req, res) => {
                         escrowIntent: {
                             include: {
                                 recipient: {
-                                    select: { id: true, displayName: true, entityType: true },
+                                    select: {
+                                        id: true,
+                                        displayName: true,
+                                        entityType: true,
+                                        payout: {
+                                            select: {
+                                                preferredAsset: true,
+                                                payoutMethod: true,
+                                                payoutAddress: true,
+                                            },
+                                        },
+                                    },
                                 },
                             },
                         },
@@ -944,7 +955,18 @@ app.get('/jobs/:jobId', async (req, res) => {
                         escrowIntent: {
                             include: {
                                 recipient: {
-                                    select: { id: true, displayName: true, entityType: true },
+                                    select: {
+                                        id: true,
+                                        displayName: true,
+                                        entityType: true,
+                                        payout: {
+                                            select: {
+                                                preferredAsset: true,
+                                                payoutMethod: true,
+                                                payoutAddress: true,
+                                            },
+                                        },
+                                    },
                                 },
                             },
                         },

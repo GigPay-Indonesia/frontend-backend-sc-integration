@@ -12,9 +12,10 @@ interface Step2Props {
     data: PaymentData;
     updateFields: (field: keyof PaymentData, value: any) => void;
     routeRegistryAddress?: `0x${string}`;
+    swapFallbackNote?: string | null;
 }
 
-export const Step2Amount: React.FC<Step2Props> = ({ data, updateFields, routeRegistryAddress }) => {
+export const Step2Amount: React.FC<Step2Props> = ({ data, updateFields, routeRegistryAddress, swapFallbackNote }) => {
     const { amount } = data;
     const payout = data.recipient.payout;
     // Defensive: older saved drafts / partial state may not include `swap`.
@@ -57,6 +58,12 @@ export const Step2Amount: React.FC<Step2Props> = ({ data, updateFields, routeReg
             <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
                 <span className="text-primary">❖</span> Amount & Assets
             </h2>
+
+            {swapFallbackNote && (
+                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4 text-blue-100 text-sm">
+                    {swapFallbackNote}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

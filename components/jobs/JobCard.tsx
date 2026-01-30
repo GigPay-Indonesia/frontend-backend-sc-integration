@@ -5,6 +5,7 @@ interface JobCardProps {
     title: string;
     description: string;
     budget: string;
+    assetSymbol?: string;
     tags: string[];
     client: string;
     clientAvatar?: string;
@@ -16,7 +17,7 @@ interface JobCardProps {
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
-    title, description, budget, tags, client, clientAvatar, bannerImage, postedTime, type, onView, onApply
+    title, description, budget, assetSymbol, tags, client, clientAvatar, bannerImage, postedTime, type, onView, onApply
 }) => {
     return (
         <div className="group relative bg-[#0f172a]/30 border border-slate-800 hover:border-blue-500/50 rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(34,211,238,0.1)] hover:-translate-y-1 backdrop-blur-sm flex flex-col h-full">
@@ -87,7 +88,7 @@ export const JobCard: React.FC<JobCardProps> = ({
                     <div className="flex-1">
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Escrow Amount</p>
                         <div className="flex items-center gap-1.5 text-white font-black font-mono text-lg">
-                            <span className="text-primary text-sm">IDRX</span> {budget}
+                            <span className="text-primary text-sm">{assetSymbol || '—'}</span> {budget}
                         </div>
                     </div>
 

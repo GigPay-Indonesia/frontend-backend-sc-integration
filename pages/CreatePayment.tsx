@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Settings } from 'lucide-react';
 import { decodeEventLog, parseUnits } from 'viem';
 import type { Abi } from 'viem';
-import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useAccount, useChainId, useReadContract, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { toast } from 'sonner';
 import ReactBitsStepper from '../components/ReactBitsStepper';
 import { Step1Recipient } from '../components/create-payment/Step1Recipient';
@@ -207,6 +207,8 @@ export const CreatePayment: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { address } = useAccount();
+    const chainId = useChainId();
+    const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
     const [currentStep, setCurrentStep] = useState(1);
     const [paymentData, setPaymentData] = useState<PaymentData>(INITIAL_DATA);
     const [recipientId, setRecipientId] = useState<string | null>(null);
@@ -215,7 +217,7 @@ export const CreatePayment: React.FC = () => {
     const escrowCore = useEscrowCoreContract();
     const treasuryVault = useTreasuryVaultContract();
     const tokenRegistry = useTokenRegistryContract();
-    const { writeContract, data: createTxHash, isPending: isCreating } = useWriteContract();
+    const { writeContract, data: createTxHash, isPending: isCreating, error: writeError } = useWriteContract();
     const writeContractUnsafe = writeContract as unknown as (args: any) => void;
     const { data: createReceipt, isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
         hash: createTxHash,
@@ -227,6 +229,8 @@ export const CreatePayment: React.FC = () => {
     const [activeIdx, setActiveIdx] = useState<number | null>(null);
     const [linked, setLinked] = useState<Array<{ milestoneIndex: number; escrowIntentId: string; onchainIntentId: string; txHash: string }>>([]);
     const [confirmLock, setConfirmLock] = useState(false);
+    const processedTxHashesRef = useRef<Set<string>>(new Set());
+    const [swapFallbackNote, setSwapFallbackNote] = useState<string | null>(null);
 
     const debugLog = (hypothesisId: string, location: string, message: string, data: Record<string, unknown>) => {
         // #region agent log
@@ -254,6 +258,28 @@ export const CreatePayment: React.FC = () => {
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const BASE_SEPOLIA_CHAIN_ID = 84532;
+    const isOnBaseSepolia = chainId === BASE_SEPOLIA_CHAIN_ID;
+
+    const handleSwitchToBaseSepolia = async () => {
+        try {
+            await switchChain({ chainId: BASE_SEPOLIA_CHAIN_ID });
+        } catch (e: any) {
+            toast.error(e?.message || 'Unable to switch network.');
+        }
+    };
+
+    useEffect(() => {
+        if (!confirmLock) return;
+        if (!writeError) return;
+        debugLog('H1', 'pages/CreatePayment.tsx:writeError', 'WRITE_CONTRACT_ERROR', {
+            message: String((writeError as any)?.message || writeError || ''),
+        });
+        // Allow user to retry if wallet rejects / write fails.
+        setConfirmLock(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [writeError]);
 
     const updateData = (field: keyof PaymentData, value: any) => {
         setPaymentData(prev => ({ ...prev, [field]: value }));
@@ -656,6 +682,28 @@ export const CreatePayment: React.FC = () => {
         return allowed;
     }, [paymentData.timing.enableYield, effectiveStrategyId, strategyRead.data]);
 
+    // Auto-fallback: if yield is enabled but the treasury-selected strategy is not allowed on-chain,
+    // auto-disable yield so Confirm can proceed (consistent UX).
+    useEffect(() => {
+        if (!paymentData.timing.enableYield) return;
+        if (!effectiveStrategyId) return;
+        if (!yieldManagerAddress) return;
+        if (strategyRead.isLoading) return;
+
+        const allowed = Boolean((strategyRead.data as any)?.[1]);
+        if (allowed) return;
+
+        toast.message('Yield strategy is not allowed for this asset. Disabling yield for this payment.');
+        setPaymentData((prev) => ({
+            ...prev,
+            timing: {
+                ...prev.timing,
+                enableYield: false,
+            },
+        }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [paymentData.timing.enableYield, effectiveStrategyId, yieldManagerAddress, strategyRead.isLoading, strategyRead.data]);
+
     const isSplitRequired = useMemo(() => {
         const profile = paymentData.recipient.profile;
         if (profile.type === 'AGENCY') {
@@ -813,6 +861,10 @@ export const CreatePayment: React.FC = () => {
     const handleCreateIntent = async () => {
         if (!escrowCore.address || !escrowCore.abi || !treasuryVault.address) return;
         if (!fundingAssetAddress || parsedAmount === 0n) return;
+        if (!isOnBaseSepolia) {
+            toast.message('Switch to Base Sepolia to confirm.');
+            return;
+        }
         if ((isSplitRequired && !isSplitValid) || !isTokenEligible || !isPayoutTokenEligible || !isDataValid) return;
         if (confirmLock) return;
 
@@ -824,6 +876,7 @@ export const CreatePayment: React.FC = () => {
 
         debugLog('H1', 'pages/CreatePayment.tsx:handleCreateIntent', 'CONFIRM_BEGIN', {
             addressPresent: Boolean(address),
+            chainId,
             jobPublish: Boolean(paymentData.job.publish),
             releaseCondition: paymentData.timing.releaseCondition,
             amountRaw: rawTotal,
@@ -958,6 +1011,11 @@ export const CreatePayment: React.FC = () => {
             toast.message('Creating on-chain escrow intent…');
             startCreateIntentTx(0, rawTotal, days);
         } catch (error: any) {
+            debugLog('H1', 'pages/CreatePayment.tsx:handleCreateIntent', 'CONFIRM_ERROR', {
+                message: String(error?.message || error || ''),
+            });
+            // Allow retry if backend metadata creation failed.
+            setConfirmLock(false);
             setCreateError(error?.message || 'Failed to create job / escrow metadata.');
             toast.error('Failed to create job / escrow metadata.');
             return;
@@ -966,6 +1024,15 @@ export const CreatePayment: React.FC = () => {
 
     useEffect(() => {
         if (!isConfirmed) return;
+
+        // Guard: in React 18+ and with receipt revalidation, this effect can fire more than once.
+        // Ensure we process each tx hash only once to prevent double linking / double next-tx kickoff.
+        if (createTxHash && processedTxHashesRef.current.has(createTxHash)) {
+            debugLog('H2', 'pages/CreatePayment.tsx:linkEffect', 'RECEIPT_ALREADY_PROCESSED', {
+                createTxHash,
+            });
+            return;
+        }
 
         debugLog('H2', 'pages/CreatePayment.tsx:linkEffect', 'RECEIPT_CONFIRMED_EFFECT', {
             isConfirmed,
@@ -977,6 +1044,7 @@ export const CreatePayment: React.FC = () => {
         });
 
         const linkIntent = async () => {
+            if (createTxHash) processedTxHashesRef.current.add(createTxHash);
             const idx = activeIdx ?? 0;
             const current = queue[idx];
             if (!current || !createReceipt?.logs?.length || !createTxHash) return;
@@ -1110,6 +1178,7 @@ export const CreatePayment: React.FC = () => {
                                     data={paymentData}
                                     updateFields={updateData}
                                     routeRegistryAddress={routeRegistryAddress}
+                                    swapFallbackNote={swapFallbackNote}
                                 />
                             )}
                             {currentStep === 3 && <Step3Timing data={paymentData} updateFields={updateData} />}
@@ -1122,6 +1191,23 @@ export const CreatePayment: React.FC = () => {
                                     queue={queue}
                                     linked={linked}
                                     isProcessing={isCreating || isConfirming}
+                                    network={{
+                                        isWrongNetwork: !isOnBaseSepolia,
+                                        currentChainId: chainId,
+                                        switching: isSwitchingChain,
+                                        onSwitch: handleSwitchToBaseSepolia,
+                                    }}
+                                    swapFallbackNote={swapFallbackNote}
+                                    eligibility={[
+                                        { label: 'Wallet connected', ok: Boolean(address) },
+                                        { label: 'Base Sepolia network', ok: isOnBaseSepolia },
+                                        { label: 'Funding token eligible', ok: isTokenEligible },
+                                        { label: 'Payout token eligible', ok: isPayoutTokenEligible },
+                                        { label: 'Swap route valid (if required)', ok: !swapRequired || isSwapRouteValid },
+                                        { label: 'Yield strategy allowed (if enabled)', ok: !paymentData.timing.enableYield || isYieldStrategyAllowed },
+                                        { label: 'Split totals 100% (if required)', ok: !isSplitRequired || isSplitValid },
+                                        { label: 'Form data valid', ok: isDataValid },
+                                    ]}
                                     confirmDisabled={
                                         !address ||
                                         confirmLock ||
@@ -1129,6 +1215,7 @@ export const CreatePayment: React.FC = () => {
                                         !isTokenEligible ||
                                         !isPayoutTokenEligible ||
                                         !isDataValid ||
+                                        !isOnBaseSepolia ||
                                         isCreating ||
                                         isConfirming ||
                                         (queue.length > 0 && linked.length >= queue.length)

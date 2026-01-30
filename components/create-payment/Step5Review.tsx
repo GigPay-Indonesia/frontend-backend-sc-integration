@@ -14,9 +14,17 @@ interface Step5Props {
     jobId?: string | null;
     queue: QueueItem[];
     linked: LinkedItem[];
+    network?: {
+        isWrongNetwork: boolean;
+        currentChainId?: number;
+        switching?: boolean;
+        onSwitch?: () => void;
+    };
+    eligibility?: Array<{ label: string; ok: boolean; hint?: string }>;
+    swapFallbackNote?: string | null;
 }
 
-export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisabled, isProcessing, error, jobId, queue, linked }) => {
+export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisabled, isProcessing, error, jobId, queue, linked, network, eligibility, swapFallbackNote }) => {
     const isMilestoneFlow = data.timing.releaseCondition === 'ON_MILESTONE';
     const nextMilestone = linked.length + 1;
     const totalMilestones = queue.length || (isMilestoneFlow ? data.milestones.items.length : 1);
@@ -65,6 +73,51 @@ export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisa
             <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
                 <span className="text-primary">❖</span> Review & Confirm
             </h2>
+
+            {network?.isWrongNetwork && (
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5">
+                    <div className="text-sm font-bold text-amber-200">Wrong network</div>
+                    <div className="mt-1 text-xs text-amber-200/80">
+                        Switch to Base Sepolia to confirm this payment. Current chain: <span className="font-mono">{String(network.currentChainId ?? '—')}</span>
+                    </div>
+                    {network.onSwitch && (
+                        <button
+                            onClick={network.onSwitch}
+                            disabled={network.switching}
+                            className="mt-4 px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 font-bold text-xs transition-all disabled:opacity-60"
+                        >
+                            {network.switching ? 'Switching…' : 'Switch to Base Sepolia'}
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {swapFallbackNote && (
+                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-5 text-blue-100 text-sm">
+                    {swapFallbackNote}
+                </div>
+            )}
+
+            {!!eligibility?.length && (
+                <div className="bg-[#0f172a]/30 border border-slate-700/50 rounded-2xl p-6">
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Eligibility checklist</div>
+                    <div className="mt-4 space-y-2">
+                        {eligibility.map((row) => (
+                            <div key={row.label} className="flex items-start justify-between gap-4 text-sm">
+                                <div className="text-slate-300">{row.label}</div>
+                                <div className={`font-bold ${row.ok ? 'text-emerald-400' : 'text-red-300'}`}>
+                                    {row.ok ? 'OK' : 'Blocked'}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {eligibility.some((x) => !x.ok) && (
+                        <div className="mt-4 text-xs text-slate-500">
+                            Fix the blocked items above to enable Confirm. Swap pairs may auto-fallback to same-asset payout.
+                        </div>
+                    )}
+                </div>
+            )}
 
             {data.job.publish && (
                 <div className="bg-[#0f172a]/30 border border-slate-700/50 rounded-2xl p-6">

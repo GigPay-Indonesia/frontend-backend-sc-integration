@@ -41,15 +41,31 @@ export const Explore: React.FC = () => {
     const toCard = (job: any) => {
         const amount = typeof job?.totalAmount === 'string' ? Number(job.totalAmount) : Number(job?.totalAmount || 0);
         const budget = Number.isFinite(amount) ? amount.toLocaleString() : '0';
+        const firstIntent = job?.milestones?.[0]?.escrowIntent;
+        const recipient = firstIntent?.recipient;
+        const recipientName = recipient?.displayName ? String(recipient.displayName) : null;
+        const recipientType = recipient?.entityType ? String(recipient.entityType) : null;
+        const payout = recipient?.payout;
+        const payoutMethod = payout?.payoutMethod ? String(payout.payoutMethod) : null;
+        const payoutAddress = payout?.payoutAddress ? String(payout.payoutAddress) : null;
+
+        const hasFx = Boolean(job?.fundingAsset && job?.payoutAsset && job.fundingAsset !== job.payoutAsset);
         const tags = [
             ...(Array.isArray(job?.tags) ? job.tags : []),
             job?.enableYield ? 'Yield' : null,
             job?.enableProtection ? 'Protection' : null,
             job?.fundingAsset || null,
+            hasFx ? 'FX' : null,
         ].filter(Boolean);
         const postedTime = job?.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'Recent';
         const type = 'Fixed Price';
-        const notes = job?.description || job?.notes || 'Escrow job';
+        const baseNotes = job?.description || job?.notes || 'Escrow job';
+        const details = [
+            recipientName ? `Recipient: ${recipientName}${recipientType ? ` (${recipientType})` : ''}` : null,
+            job?.fundingAsset && job?.payoutAsset ? `Assets: ${job.fundingAsset}→${job.payoutAsset}` : null,
+            payoutMethod ? `Method: ${payoutMethod}${payoutAddress ? ` (${payoutAddress.slice(0, 6)}…${payoutAddress.slice(-4)})` : ''}` : null,
+        ].filter(Boolean);
+        const notes = details.length ? `${baseNotes} • ${details.join(' • ')}` : baseNotes;
         const client = shortAddr(job?.createdBy);
         const onchainIntentId =
             job?.milestones?.find((m: any) => m?.escrowIntent?.onchainIntentId != null)?.escrowIntent?.onchainIntentId ?? null;
@@ -67,6 +83,7 @@ export const Explore: React.FC = () => {
             type,
             jobId: job?.id,
             onchainIntentId,
+            assetSymbol: job?.fundingAsset || undefined,
         };
     };
 
@@ -225,6 +242,7 @@ export const Explore: React.FC = () => {
                                 title={job.title}
                                 description={job.description}
                                 budget={job.budget}
+                                assetSymbol={job.assetSymbol}
                                 tags={job.tags}
                                 client={job.client}
                                 clientAvatar={job.clientAvatar}

@@ -45,6 +45,11 @@ export const ExploreJob: React.FC = () => {
     return rows.slice().sort((a: any, b: any) => Number(a.index || 0) - Number(b.index || 0));
   }, [job]);
 
+  const recipient = useMemo(() => {
+    const first = milestones[0]?.escrowIntent?.recipient;
+    return first || null;
+  }, [milestones]);
+
   const firstOnchain = useMemo(() => {
     for (const m of milestones) {
       const id = m?.escrowIntent?.onchainIntentId;
@@ -130,6 +135,23 @@ export const ExploreJob: React.FC = () => {
                 <div className="flex-1">
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Overview</div>
                   <div className="mt-2 text-slate-200 text-sm leading-relaxed">{job.description || job.notes || '—'}</div>
+                  {recipient && (
+                    <div className="mt-4 rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recipient</div>
+                      <div className="mt-2 text-sm text-slate-200 font-bold">
+                        {recipient.displayName} <span className="text-slate-500 font-normal">({recipient.entityType})</span>
+                      </div>
+                      <div className="mt-1 text-xs text-slate-400">
+                        Method: {recipient?.payout?.payoutMethod || '—'}{' '}
+                        {recipient?.payout?.payoutAddress ? (
+                          <span className="font-mono text-slate-300">({String(recipient.payout.payoutAddress).slice(0, 6)}…{String(recipient.payout.payoutAddress).slice(-4)})</span>
+                        ) : null}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        Preferred asset: <span className="text-slate-300 font-bold">{recipient?.payout?.preferredAsset || job.payoutAsset || '—'}</span>
+                      </div>
+                    </div>
+                  )}
                   {!!job.tags?.length && (
                     <div className="mt-4 flex flex-wrap gap-2">
                       {job.tags.slice(0, 10).map((t: string) => (

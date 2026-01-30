@@ -80,7 +80,8 @@ const JobDetailsModal: React.FC<JobDetailsModalProps> = ({ isOpen, onClose, job,
                                     <div className="p-4 bg-white/5 rounded-xl border border-white/5">
                                         <p className="text-xs text-slate-500 uppercase font-bold mb-1">Escrow Amount</p>
                                         <p className="text-white font-mono font-bold flex items-center gap-1">
-                                            {job.budget} <span className="text-xs font-normal text-slate-500">IDRX</span>
+                                            {job.budget}{' '}
+                                            <span className="text-xs font-normal text-slate-500">{job.assetSymbol || '—'}</span>
                                         </p>
                                     </div>
                                     <div className="p-4 bg-white/5 rounded-xl border border-white/5">
