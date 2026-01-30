@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCircle2, FileText, Layers, Wallet, ShieldCheck, ArrowUpRight } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { CheckCircle2, FileText, Layers, Wallet, ShieldCheck, ArrowUpRight, AlertTriangle } from 'lucide-react';
 import { PaymentData } from '../../pages/CreatePayment';
 
 type QueueItem = { milestoneIndex: number; escrowIntentId: string; amountRaw: string; deadlineDays: number };
@@ -55,6 +55,16 @@ export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisa
                 ? 'Processing…'
                 : 'Confirm';
 
+    const blocked = useMemo(() => (eligibility || []).filter((x) => !x.ok), [eligibility]);
+    const blockedLabel = blocked.length ? blocked[0].label : null;
+
+    const primaryCta = useMemo(() => {
+        if (network?.isWrongNetwork && network?.onSwitch) return 'Switch to Base Sepolia';
+        if (!eligibility?.find((x) => x.label.toLowerCase().includes('wallet'))?.ok) return 'Connect wallet';
+        if (confirmDisabled) return blockedLabel ? `Fix: ${blockedLabel}` : 'Fix items above';
+        return ctaLabel;
+    }, [blockedLabel, ctaLabel, confirmDisabled, eligibility, network?.isWrongNetwork, network?.onSwitch]);
+
     const handleConfirmClick = () => {
         debugLog('H1', 'components/create-payment/Step5Review.tsx:handleConfirmClick', 'CONFIRM_CLICK', {
             confirmDisabled,
@@ -65,57 +75,38 @@ export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisa
             linkedLen: linked.length,
             totalMilestones,
         });
+
+        // If we're on the wrong network and the caller provided a switch action,
+        // use the primary CTA to switch instead of attempting to create.
+        if (network?.isWrongNetwork && network?.onSwitch) {
+            return network.onSwitch();
+        }
+
         return onConfirm();
     };
 
-    return (
-        <div className="space-y-8 animate-fadeIn">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
-                <span className="text-primary">❖</span> Review & Confirm
-            </h2>
+    const canOverrideNetwork = Boolean(network?.isWrongNetwork && network?.onSwitch);
+    const disablePrimary = (confirmDisabled && !canOverrideNetwork) || (queue.length > 0 && linked.length >= queue.length);
 
-            {network?.isWrongNetwork && (
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5">
-                    <div className="text-sm font-bold text-amber-200">Wrong network</div>
-                    <div className="mt-1 text-xs text-amber-200/80">
-                        Switch to Base Sepolia to confirm this payment. Current chain: <span className="font-mono">{String(network.currentChainId ?? '—')}</span>
+    return (
+        <div className="space-y-6 animate-fadeIn">
+            <div className="flex items-center justify-between gap-4">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <span className="text-primary">❖</span> Confirm payment
+                </h2>
+                {blocked.length ? (
+                    <div className="text-xs font-bold text-amber-200 flex items-center gap-2">
+                        <AlertTriangle size={16} className="text-amber-300" />
+                        {blocked.length} blocker{blocked.length === 1 ? '' : 's'}
                     </div>
-                    {network.onSwitch && (
-                        <button
-                            onClick={network.onSwitch}
-                            disabled={network.switching}
-                            className="mt-4 px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 font-bold text-xs transition-all disabled:opacity-60"
-                        >
-                            {network.switching ? 'Switching…' : 'Switch to Base Sepolia'}
-                        </button>
-                    )}
-                </div>
-            )}
+                ) : (
+                    <div className="text-xs font-bold text-emerald-300">Ready</div>
+                )}
+            </div>
 
             {swapFallbackNote && (
                 <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-5 text-blue-100 text-sm">
                     {swapFallbackNote}
-                </div>
-            )}
-
-            {!!eligibility?.length && (
-                <div className="bg-[#0f172a]/30 border border-slate-700/50 rounded-2xl p-6">
-                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Eligibility checklist</div>
-                    <div className="mt-4 space-y-2">
-                        {eligibility.map((row) => (
-                            <div key={row.label} className="flex items-start justify-between gap-4 text-sm">
-                                <div className="text-slate-300">{row.label}</div>
-                                <div className={`font-bold ${row.ok ? 'text-emerald-400' : 'text-red-300'}`}>
-                                    {row.ok ? 'OK' : 'Blocked'}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    {eligibility.some((x) => !x.ok) && (
-                        <div className="mt-4 text-xs text-slate-500">
-                            Fix the blocked items above to enable Confirm. Swap pairs may auto-fallback to same-asset payout.
-                        </div>
-                    )}
                 </div>
             )}
 
@@ -148,7 +139,7 @@ export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisa
                 </div>
             )}
 
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-[#0f172a]/30 border border-slate-700/50 rounded-2xl p-6">
                     <div className="bg-[#0a0a0a] rounded-xl p-4 border border-slate-800 flex items-center gap-4">
                         <div className="p-3 rounded-full bg-primary/10 text-primary">
@@ -223,6 +214,31 @@ export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisa
                         </div>
                     </div>
                 </div>
+
+                {!!eligibility?.length && (
+                    <div className="bg-[#0f172a]/30 border border-slate-700/50 rounded-2xl p-6">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Preflight checks</div>
+                        <div className="mt-4 space-y-2">
+                            {eligibility.map((row) => (
+                                <div key={row.label} className="flex items-start justify-between gap-4 text-sm">
+                                    <div className="text-slate-300">{row.label}</div>
+                                    <div className={`font-bold ${row.ok ? 'text-emerald-400' : 'text-red-300'}`}>
+                                        {row.ok ? 'OK' : 'Blocked'}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {blocked.length ? (
+                            <div className="mt-4 text-xs text-slate-500">
+                                Fix the blocked items to enable confirm. Network + wallet are required; swaps require an allowed route.
+                            </div>
+                        ) : (
+                            <div className="mt-4 text-xs text-slate-500">
+                                Looks good. You can confirm to create the on-chain intent{queue.length > 1 ? 's' : ''}.
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {isMilestoneFlow && (
@@ -278,25 +294,61 @@ export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisa
                 </div>
             )}
 
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-3 items-center">
-                <CheckCircle2 className="text-blue-400 shrink-0" size={24} />
-                <div>
-                    <h4 className="text-sm font-bold text-white">Ready to Create</h4>
-                    <p className="text-xs text-slate-400">
-                        {data.job.publish
-                            ? 'Confirm will create a public job and then create one on-chain escrow per milestone.'
-                            : 'Confirm will create the payment intent and link it to the backend.'}
-                    </p>
+            <div className="bg-[#0f172a]/40 border border-slate-700/50 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="text-sm font-bold text-white">Confirm payment</div>
+                    {blocked.length ? (
+                        <div className="text-xs font-bold text-amber-200 flex items-center gap-2">
+                            <AlertTriangle size={14} className="text-amber-300" />
+                            {blocked.length} blocker{blocked.length === 1 ? '' : 's'}
+                        </div>
+                    ) : (
+                        <div className="text-xs font-bold text-emerald-300">Ready</div>
+                    )}
+                </div>
+
+                {blocked.length > 0 ? (
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-amber-100 text-xs">
+                        <div className="font-bold">Action required</div>
+                        <ul className="mt-2 space-y-2">
+                            {blocked.map((row) => (
+                                <li key={row.label} className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <div className="text-amber-100 font-bold">{row.label}</div>
+                                        {row.hint ? <div className="text-amber-100/80">{row.hint}</div> : null}
+                                    </div>
+                                    <span className="text-amber-200 font-bold">Fix</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ) : null}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">What happens</div>
+                        <div className="mt-2 text-xs text-slate-400 leading-relaxed">
+                            {data.job.publish
+                                ? 'We create the job metadata, then create one on-chain escrow intent per milestone.'
+                                : 'We create the intent metadata, then create the on-chain escrow intent.'}
+                            {network?.isWrongNetwork ? ' You must switch to Base Sepolia first.' : ''}
+                        </div>
+                        {isProcessing && (
+                            <div className="mt-2 text-[11px] text-slate-500">Wallet confirmations may be required.</div>
+                        )}
+                    </div>
+                    <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 flex flex-col justify-between">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Primary action</div>
+                        <button
+                            onClick={handleConfirmClick}
+                            disabled={disablePrimary}
+                            className="mt-3 w-full px-6 py-3 rounded-xl font-bold transition-all bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)] disabled:opacity-60"
+                        >
+                            {isProcessing ? 'Processing…' : primaryCta}
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            <button
-                onClick={handleConfirmClick}
-                disabled={confirmDisabled || (queue.length > 0 && linked.length >= queue.length)}
-                className="w-full px-8 py-3 rounded-xl font-bold transition-all bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)] disabled:opacity-60"
-            >
-                {isProcessing ? 'Processing…' : ctaLabel}
-            </button>
         </div>
     );
 };

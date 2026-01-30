@@ -747,7 +747,6 @@ export const CreatePayment: React.FC = () => {
         if (!policy.riskTier || !policy.approvalPolicy) return false;
         if (!paymentData.amount.value || !paymentData.amount.fundingAsset || !paymentData.amount.payoutAsset) return false;
         if (swapRequired && !isSwapRouteValid) return false;
-        if (paymentData.timing.enableYield && !isYieldStrategyAllowed) return false;
         if (!paymentData.timing.releaseCondition || !paymentData.timing.deadline) return false;
 
         if (profile.type === 'VENDOR') {
@@ -778,7 +777,7 @@ export const CreatePayment: React.FC = () => {
         }
 
         return true;
-    }, [paymentData, isMilestoneRequired, isSplitRequired, isSplitValid, swapRequired, isSwapRouteValid, isYieldStrategyAllowed]);
+    }, [paymentData, isMilestoneRequired, isSplitRequired, isSplitValid, swapRequired, isSwapRouteValid]);
 
     const parseDays = (value: string) => {
         const numeric = Number(value.replace(/[^0-9]/g, ''));
@@ -802,7 +801,7 @@ export const CreatePayment: React.FC = () => {
         const deadline = BigInt(now + Number(deadlineDays) * 86400);
         const acceptanceWindow = BigInt(Number(deadlineDays) * 86400);
 
-        const escrowYieldEnabled = Boolean(paymentData.timing.enableYield);
+        const escrowYieldEnabled = Boolean(paymentData.timing.enableYield && effectiveStrategyId && isYieldStrategyAllowed);
         const escrowStrategyId = escrowYieldEnabled ? effectiveStrategyId : 0;
         const usePayout = payoutAssetAddress && payoutAssetAddress !== fundingAssetAddress;
         const preferredRoute = ROUTE_PREFERENCE_UINT8[paymentData.swap.preference];
@@ -931,7 +930,7 @@ export const CreatePayment: React.FC = () => {
                             releaseCondition: paymentData.timing.releaseCondition,
                             deadlineDays: days,
                             acceptanceWindowDays: days,
-                            enableYield: paymentData.timing.enableYield,
+                            enableYield: Boolean(paymentData.timing.enableYield && effectiveStrategyId && isYieldStrategyAllowed),
                             enableProtection: paymentData.timing.enableProtection,
                             splitConfig: splitBps,
                             milestones: paymentData.milestones.items.map((m) => ({
@@ -994,7 +993,7 @@ export const CreatePayment: React.FC = () => {
                     releaseCondition: paymentData.timing.releaseCondition,
                     deadlineDays: days,
                     acceptanceWindowDays: days,
-                    enableYield: paymentData.timing.enableYield,
+                    enableYield: Boolean(paymentData.timing.enableYield && effectiveStrategyId && isYieldStrategyAllowed),
                     enableProtection: paymentData.timing.enableProtection,
                     splitConfig: splitBps,
                     milestoneTemplate: paymentData.milestones.items,
@@ -1199,14 +1198,41 @@ export const CreatePayment: React.FC = () => {
                                     }}
                                     swapFallbackNote={swapFallbackNote}
                                     eligibility={[
-                                        { label: 'Wallet connected', ok: Boolean(address) },
-                                        { label: 'Base Sepolia network', ok: isOnBaseSepolia },
-                                        { label: 'Funding token eligible', ok: isTokenEligible },
-                                        { label: 'Payout token eligible', ok: isPayoutTokenEligible },
-                                        { label: 'Swap route valid (if required)', ok: !swapRequired || isSwapRouteValid },
-                                        { label: 'Yield strategy allowed (if enabled)', ok: !paymentData.timing.enableYield || isYieldStrategyAllowed },
-                                        { label: 'Split totals 100% (if required)', ok: !isSplitRequired || isSplitValid },
-                                        { label: 'Form data valid', ok: isDataValid },
+                                        {
+                                            label: 'Wallet connected',
+                                            ok: Boolean(address),
+                                            hint: 'Connect your wallet to sign the escrow intent.',
+                                        },
+                                        {
+                                            label: 'Base Sepolia network',
+                                            ok: isOnBaseSepolia,
+                                            hint: 'Switch to Base Sepolia to create the on-chain intent.',
+                                        },
+                                        {
+                                            label: 'Funding token eligible',
+                                            ok: isTokenEligible,
+                                            hint: 'Choose a funding asset listed in the TokenRegistry.',
+                                        },
+                                        {
+                                            label: 'Payout token eligible',
+                                            ok: isPayoutTokenEligible,
+                                            hint: 'Choose a payout asset listed in the TokenRegistry.',
+                                        },
+                                        {
+                                            label: 'Swap route valid (if required)',
+                                            ok: !swapRequired || isSwapRouteValid,
+                                            hint: 'Pick a payout asset with an allowed route (RFQ or fallback).',
+                                        },
+                                        {
+                                            label: 'Split totals 100% (if required)',
+                                            ok: !isSplitRequired || isSplitValid,
+                                            hint: 'Adjust split percentages so they total 100%.',
+                                        },
+                                        {
+                                            label: 'Form data valid',
+                                            ok: isDataValid,
+                                            hint: 'Complete all required fields before confirming.',
+                                        },
                                     ]}
                                     confirmDisabled={
                                         !address ||
@@ -1215,7 +1241,6 @@ export const CreatePayment: React.FC = () => {
                                         !isTokenEligible ||
                                         !isPayoutTokenEligible ||
                                         !isDataValid ||
-                                        !isOnBaseSepolia ||
                                         isCreating ||
                                         isConfirming ||
                                         (queue.length > 0 && linked.length >= queue.length)
