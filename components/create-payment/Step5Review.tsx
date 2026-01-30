@@ -20,6 +20,23 @@ export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisa
     const isMilestoneFlow = data.timing.releaseCondition === 'ON_MILESTONE';
     const nextMilestone = linked.length + 1;
     const totalMilestones = queue.length || (isMilestoneFlow ? data.milestones.items.length : 1);
+    const debugLog = (hypothesisId: string, location: string, message: string, data: Record<string, unknown>) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/db4bbdf7-65ed-4d2d-8f1f-a869c687e301', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: 'debug-session',
+                runId: 'payment-create',
+                hypothesisId,
+                location,
+                message,
+                data,
+                timestamp: Date.now(),
+            }),
+        }).catch(() => { });
+        // #endregion agent log
+    };
 
     const ctaLabel =
         queue.length > 0
@@ -29,6 +46,19 @@ export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisa
             : isProcessing
                 ? 'Processing…'
                 : 'Confirm';
+
+    const handleConfirmClick = () => {
+        debugLog('H1', 'components/create-payment/Step5Review.tsx:handleConfirmClick', 'CONFIRM_CLICK', {
+            confirmDisabled,
+            isProcessing,
+            releaseCondition: data.timing.releaseCondition,
+            jobPublish: Boolean(data.job.publish),
+            queueLen: queue.length,
+            linkedLen: linked.length,
+            totalMilestones,
+        });
+        return onConfirm();
+    };
 
     return (
         <div className="space-y-8 animate-fadeIn">
@@ -208,7 +238,7 @@ export const Step5Review: React.FC<Step5Props> = ({ data, onConfirm, confirmDisa
             </div>
 
             <button
-                onClick={onConfirm}
+                onClick={handleConfirmClick}
                 disabled={confirmDisabled || (queue.length > 0 && linked.length >= queue.length)}
                 className="w-full px-8 py-3 rounded-xl font-bold transition-all bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)] disabled:opacity-60"
             >

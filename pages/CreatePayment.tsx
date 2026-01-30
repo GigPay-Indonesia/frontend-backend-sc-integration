@@ -216,6 +216,25 @@ export const CreatePayment: React.FC = () => {
     const [queue, setQueue] = useState<Array<{ milestoneIndex: number; escrowIntentId: string; amountRaw: string; deadlineDays: number }>>([]);
     const [activeIdx, setActiveIdx] = useState<number | null>(null);
     const [linked, setLinked] = useState<Array<{ milestoneIndex: number; escrowIntentId: string; onchainIntentId: string; txHash: string }>>([]);
+    const [confirmLock, setConfirmLock] = useState(false);
+
+    const debugLog = (hypothesisId: string, location: string, message: string, data: Record<string, unknown>) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/db4bbdf7-65ed-4d2d-8f1f-a869c687e301', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: 'debug-session',
+                runId: 'payment-create',
+                hypothesisId,
+                location,
+                message,
+                data,
+                timestamp: Date.now(),
+            }),
+        }).catch(() => { });
+        // #endregion agent log
+    };
 
     const updateData = (field: keyof PaymentData, value: any) => {
         setPaymentData(prev => ({ ...prev, [field]: value }));
@@ -612,6 +631,15 @@ export const CreatePayment: React.FC = () => {
         const usePayout = payoutAssetAddress && payoutAssetAddress !== fundingAssetAddress;
 
         setActiveIdx(milestoneIdx);
+        debugLog('H2', 'pages/CreatePayment.tsx:startCreateIntentTx', 'WRITE_CONTRACT_ATTEMPT', {
+            milestoneIdx,
+            amountRaw,
+            deadlineDays,
+            usePayout: Boolean(usePayout),
+            escrowYieldEnabled,
+            queueLen: queue.length,
+            linkedLen: linked.length,
+        });
 
         if (usePayout) {
             writeContractUnsafe({
@@ -655,11 +683,24 @@ export const CreatePayment: React.FC = () => {
         if (!escrowCore.address || !escrowCore.abi || !treasuryVault.address) return;
         if (!fundingAssetAddress || parsedAmount === 0n) return;
         if ((isSplitRequired && !isSplitValid) || !isTokenEligible || !isDataValid) return;
+        if (confirmLock) return;
 
         setCreateError(null);
+        setConfirmLock(true);
 
         const days = parseDays(paymentData.timing.deadline);
         const rawTotal = paymentData.amount.value.replace(/\./g, '');
+
+        debugLog('H1', 'pages/CreatePayment.tsx:handleCreateIntent', 'CONFIRM_BEGIN', {
+            addressPresent: Boolean(address),
+            jobPublish: Boolean(paymentData.job.publish),
+            releaseCondition: paymentData.timing.releaseCondition,
+            amountRaw: rawTotal,
+            fundingAsset: paymentData.amount.fundingAsset,
+            payoutAsset: paymentData.amount.payoutAsset,
+            splitRecipients: paymentData.split.recipients.length,
+            milestonesCount: paymentData.milestones.items.length,
+        });
 
         try {
             const createdRecipientId = recipientId || await createRecipient({
@@ -680,6 +721,14 @@ export const CreatePayment: React.FC = () => {
 
             if (shouldPublishJob) {
                 try {
+                    debugLog('H3', 'pages/CreatePayment.tsx:handleCreateIntent', 'CREATE_JOB_REQUEST', {
+                        createdByPresent: Boolean(address),
+                        titleLen: paymentData.job.title?.length || 0,
+                        descLen: paymentData.job.description?.length || 0,
+                        tagsCount: paymentData.job.tags?.length || 0,
+                        amountRaw: rawTotal,
+                        milestonesCount: paymentData.milestones.items.length,
+                    });
                     const jobRes = await createJob({
                         createdBy: address || '',
                         job: {
@@ -711,6 +760,11 @@ export const CreatePayment: React.FC = () => {
                     });
 
                     setJobId(jobRes.jobId);
+                    debugLog('H3', 'pages/CreatePayment.tsx:handleCreateIntent', 'CREATE_JOB_OK', {
+                        jobId: jobRes.jobId,
+                        intentsCount: Array.isArray(jobRes.intents) ? jobRes.intents.length : null,
+                        milestonesCount: Array.isArray(jobRes.milestones) ? jobRes.milestones.length : null,
+                    });
 
                     const q = (jobRes.intents || []).map((intent: any, idx: number) => {
                         const amountStr = String(intent.amount ?? '').split('.')[0];
@@ -781,6 +835,15 @@ export const CreatePayment: React.FC = () => {
 
     useEffect(() => {
         if (!isConfirmed) return;
+
+        debugLog('H2', 'pages/CreatePayment.tsx:linkEffect', 'RECEIPT_CONFIRMED_EFFECT', {
+            isConfirmed,
+            createTxHash: createTxHash || null,
+            receiptLogs: createReceipt?.logs?.length || 0,
+            activeIdx,
+            queueLen: queue.length,
+            linkedLen: linked.length,
+        });
 
         const linkIntent = async () => {
             const idx = activeIdx ?? 0;
@@ -924,6 +987,7 @@ export const CreatePayment: React.FC = () => {
                                     isProcessing={isCreating || isConfirming}
                                     confirmDisabled={
                                         !address ||
+                                        confirmLock ||
                                         (isSplitRequired && !isSplitValid) ||
                                         !isTokenEligible ||
                                         !isDataValid ||
